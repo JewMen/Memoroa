@@ -1,6 +1,6 @@
 {
-  "name": "筆記本",
-  "short_name": "筆記本",
+  "name": "CanlinAirStean",
+  "short_name": "CanlinAirStean",
   "description": "筆記應用程式。",
   "start_url": "./",
   "display": "standalone",
@@ -19,3 +19,4 @@
     }
   ]
 }
+
