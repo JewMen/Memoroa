@@ -1,3 +1,4 @@
+# 這是工作流程的名稱，將顯示在 GitHub 的 Actions 頁面
 name: Deploy static content to Pages
 
 # 設定何時觸發此工作流程
