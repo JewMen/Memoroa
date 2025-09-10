@@ -21,11 +21,9 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // 從快取中回傳資源
         if (response) {
           return response;
         }
-        // 如果快取中沒有，則發送網路請求
         return fetch(event.request);
       })
   );
