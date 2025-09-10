@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高級筆記本</title>
+
+    <link rel="manifest" href="/manifest.json">
+
+    <style>
+        /* CSS 變數定義，方便管理顏色 */
+        :root {
+            --bg-color: #f5f7fa;
+            --sidebar-bg: #ffffff;
+            --note-item-hover: #eef1f5;
+            --note-item-active: #e0e9f0;
+            --primary-color: #007bff;
+            --btn-text-color: #ffffff;
+            --border-color: #e0e6ed;
+            --text-color: #333;
+            --placeholder-color: #999;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --delete-btn-color: #999;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            overflow: hidden; /* 隱藏滾動條 */
+        }
+
+        #sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            padding: 20px 0;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-light);
+            transition: width 0.3s ease;
+        }
+
+        #new-note-btn {
+            background-color: var(--primary-color);
+            color: var(--btn-text-color);
+            border: none;
+            padding: 12px 20px;
+            margin: 0 20px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+        #new-note-btn:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        #note-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .note-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .note-item:hover {
+            background-color: var(--note-item-hover);
+        }
+        .note-item.active {
+            background-color: var(--note-item-active);
+            border-left: 4px solid var(--primary-color);
+            padding-left: 16px;
+        }
+        
+        .note-title {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-grow: 1;
+        }
+        .note-preview {
+            font-size: 14px;
+            color: var(--placeholder-color);
+            margin-top: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .delete-btn {
+            background: none;
+            border: none;
+            color: var(--delete-btn-color);
+            font-size: 18px;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity 0.2s ease, color 0.2s ease;
+            margin-left: 10px;
+        }
+        .delete-btn:hover {
+            color: red;
+            opacity: 1;
+        }
+
+        #main-content {
+            flex-grow: 1;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #note-editor {
+            width: 100%;
+            flex-grow: 1;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            font-size: 18px;
+            line-height: 1.6;
+            resize: none;
+            background-color: var(--sidebar-bg);
+            box-shadow: var(--shadow-light);
+            transition: all 0.2s ease;
+        }
+        #note-editor:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+
+        /* 手機版適應性設計 */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            #sidebar {
+                width: 100%;
+                height: 40vh;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+            #note-list {
+                padding-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <button id="new-note-btn">＋ 新增筆記</button>
+        <ul id="note-list"></ul>
+    </div>
+
+    <div id="main-content">
+        <textarea id="note-editor" placeholder="在此開始寫筆記..."></textarea>
+    </div>
+
+    <script>
+        const noteList = document.getElementById('note-list');
+        const noteEditor = document.getElementById('note-editor');
+        const newNoteBtn = document.getElementById('new-note-btn');
+        let currentNoteId = null;
+        let saveTimer; // 用於自動儲存的計時器
+
+        // 初始化
+        window.onload = () => {
+            loadNotes();
+            noteEditor.focus();
+        };
+
+        // 事件監聽
+        newNoteBtn.onclick = newNote;
+        // 鍵盤輸入事件，用於觸發自動儲存
+        noteEditor.oninput = () => {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveNote, 500); // 停止輸入0.5秒後自動儲存
+        };
+
+        // 從 localStorage 讀取所有筆記並顯示
+        function loadNotes() {
+            noteList.innerHTML = '';
+            const notes = getNotesFromStorage();
+            
+            notes.forEach(note => {
+                const li = document.createElement('li');
+                li.className = 'note-item';
+                li.setAttribute('data-id', note.id);
+                
+                const contentWrapper = document.createElement('div');
+                const title = document.createElement('div');
+                title.className = 'note-title';
+                title.textContent = note.content.split('\n')[0].substring(0, 30) || "新筆記";
+                
+                const preview = document.createElement('div');
+                preview.className = 'note-preview';
+                preview.textContent = note.content.split('\n')[1] || "無預覽";
+                
+                contentWrapper.appendChild(title);
+                contentWrapper.appendChild(preview);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '×';
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteNote(note.id);
+                };
+                
+                li.appendChild(contentWrapper);
+                li.appendChild(deleteBtn);
+                
+                li.onclick = () => selectNote(note.id);
+                noteList.appendChild(li);
+            });
+
+            // 如果有筆記，預設選取第一則
+            if (notes.length > 0) {
+                selectNote(currentNoteId || notes[0].id);
+            } else {
+                currentNoteId = null;
+                noteEditor.value = '';
+            }
+        }
+        
+        // 自動儲存或更新筆記
+        function saveNote() {
+            const content = noteEditor.value.trim();
+            const notes = getNotesFromStorage();
+            
+            if (!content && currentNoteId) {
+                // 如果內容清空，自動刪除筆記
+                deleteNote(currentNoteId);
+                return;
+            }
+            if (!content && !currentNoteId) {
+                return; // 如果為空白新筆記，則不儲存
+            }
+
+            const now = Date.now().toString();
+            
+            if (currentNoteId) {
+                const noteToUpdate = notes.find(note => note.id === currentNoteId);
+                if (noteToUpdate) {
+                    noteToUpdate.content = content;
+                }
+            } else {
+                const newNote = {
+                    id: now,
+                    content: content
+                };
+                notes.unshift(newNote);
+                currentNoteId = now;
+            }
+            
+            localStorage.setItem('notes', JSON.stringify(notes));
+            loadNotes();
+        }
+        
+        // 顯示特定筆記到編輯器
+        function selectNote(id) {
+            const notes = getNotesFromStorage();
+            const selectedNote = notes.find(note => note.id === id);
+            
+            if (selectedNote) {
+                noteEditor.value = selectedNote.content;
+                currentNoteId = id;
+                document.querySelectorAll('.note-item').forEach(item => {
+                    item.classList.toggle('active', item.getAttribute('data-id') === id);
+                });
+                noteEditor.focus();
+            }
+        }
+        
+        // 建立新筆記
+        function newNote() {
+            noteEditor.value = '';
+            currentNoteId = null;
+            document.querySelectorAll('.note-item').forEach(item => item.classList.remove('active'));
+            noteEditor.focus();
+        }
+        
+        // 刪除筆記
+        function deleteNote(id) {
+            const notes = getNotesFromStorage();
+            const filteredNotes = notes.filter(note => note.id !== id);
+            localStorage.setItem('notes', JSON.stringify(filteredNotes));
+            
+            if (currentNoteId === id) {
+                newNote();
+            }
+            
+            loadNotes();
+        }
+
+        // 從 localStorage 取得筆記的輔助函式
+        function getNotesFromStorage() {
+            try {
+                const notesJSON = localStorage.getItem('notes');
+                return notesJSON ? JSON.parse(notesJSON) : [];
+            } catch (e) {
+                console.error("無法解析 localStorage 中的筆記", e);
+                return [];
+            }
+        }
+        
+        // PWA - 註冊 Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('Service Worker registration failed: ', registrationError);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
