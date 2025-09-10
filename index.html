@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>筆記本</title>
+    <title>高級筆記本</title>
 
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="./manifest.json">
 
     <style>
         /* CSS 變數定義，方便管理顏色 */
@@ -30,7 +30,7 @@
             margin: 0;
             background-color: var(--bg-color);
             color: var(--text-color);
-            overflow: hidden; /* 隱藏滾動條 */
+            overflow: hidden;
         }
 
         #sidebar {
@@ -178,21 +178,17 @@
         let currentNoteId = null;
         let saveTimer; // 用於自動儲存的計時器
 
-        // 初始化
         window.onload = () => {
             loadNotes();
             noteEditor.focus();
         };
 
-        // 事件監聽
         newNoteBtn.onclick = newNote;
-        // 鍵盤輸入事件，用於觸發自動儲存
         noteEditor.oninput = () => {
             clearTimeout(saveTimer);
-            saveTimer = setTimeout(saveNote, 500); // 停止輸入0.5秒後自動儲存
+            saveTimer = setTimeout(saveNote, 500);
         };
 
-        // 從 localStorage 讀取所有筆記並顯示
         function loadNotes() {
             noteList.innerHTML = '';
             const notes = getNotesFromStorage();
@@ -229,7 +225,6 @@
                 noteList.appendChild(li);
             });
 
-            // 如果有筆記，預設選取第一則
             if (notes.length > 0) {
                 selectNote(currentNoteId || notes[0].id);
             } else {
@@ -238,18 +233,16 @@
             }
         }
         
-        // 自動儲存或更新筆記
         function saveNote() {
             const content = noteEditor.value.trim();
             const notes = getNotesFromStorage();
             
             if (!content && currentNoteId) {
-                // 如果內容清空，自動刪除筆記
                 deleteNote(currentNoteId);
                 return;
             }
             if (!content && !currentNoteId) {
-                return; // 如果為空白新筆記，則不儲存
+                return;
             }
 
             const now = Date.now().toString();
@@ -272,7 +265,6 @@
             loadNotes();
         }
         
-        // 顯示特定筆記到編輯器
         function selectNote(id) {
             const notes = getNotesFromStorage();
             const selectedNote = notes.find(note => note.id === id);
@@ -287,7 +279,6 @@
             }
         }
         
-        // 建立新筆記
         function newNote() {
             noteEditor.value = '';
             currentNoteId = null;
@@ -295,7 +286,6 @@
             noteEditor.focus();
         }
         
-        // 刪除筆記
         function deleteNote(id) {
             const notes = getNotesFromStorage();
             const filteredNotes = notes.filter(note => note.id !== id);
@@ -308,7 +298,6 @@
             loadNotes();
         }
 
-        // 從 localStorage 取得筆記的輔助函式
         function getNotesFromStorage() {
             try {
                 const notesJSON = localStorage.getItem('notes');
@@ -319,7 +308,6 @@
             }
         }
         
-        // PWA - 註冊 Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
