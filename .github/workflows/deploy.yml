@@ -4,25 +4,20 @@ name: Deploy static content to Pages
 # 設定何時觸發此工作流程
 on:
   push:
-    branches: ["main"] # 當程式碼被推送到 main 分支時觸發
+    branches: ["main"]
 
-# 設定權限，以讓 GitHub Pages 能夠正常運作
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# 單個工作流程執行
 jobs:
-  # 部署作業
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    # 執行環境
     runs-on: ubuntu-latest
 
-    # 步驟
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -33,7 +28,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          # 上傳你的網站程式碼，這裡的 . 代表整個專案的根目錄
           path: '.'
 
       - name: Deploy to GitHub Pages
