@@ -2,8 +2,9 @@ const CACHE_NAME = 'note-app-cache-v1';
 const urlsToCache = [
   './',
   './index.html',
-  './manifest.json'
-  // 這裡可以加入其他你想快取的檔案，例如 icons/
+  './manifest.json',
+  './icons/icon-192x192.png',
+  './icons/icon-512x512.png'
 ];
 
 self.addEventListener('install', event => {
