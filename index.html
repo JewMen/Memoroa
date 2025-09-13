@@ -8,7 +8,7 @@
     <link rel="manifest" href="./manifest.json">
 
     <style>
-        /* CSS */
+        /* CSS 變數定義，方便管理顏色 */
         :root {
             --bg-color: #f5f7fa;
             --sidebar-bg: #ffffff;
@@ -171,6 +171,19 @@
             color: var(--placeholder-color);
         }
 
+        /* 箭頭符號樣式 */
+        #note-editor ul li {
+            list-style-type: none;
+        }
+
+        #note-editor ul li::before {
+            content: '➣';
+            color: var(--primary-color);
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+
         /* 手機版適應性設計 */
         @media (max-width: 768px) {
             body {
@@ -218,9 +231,10 @@
 
     <div id="main-content">
         <div id="toolbar">
-            <button class="format-btn" onclick="formatDoc('bold')"><b>B</b></button>
-            <button class="format-btn" onclick="formatDoc('italic')"><i>I</i></button>
+            <button class="format-btn" onclick="formatDoc('bold')"><b>粗體</b></button>
+            <button class="format-btn" onclick="formatDoc('italic')"><i>斜體</i></button>
             <button class="format-btn" onclick="formatDoc('insertUnorderedList')">項目</button>
+            <button class="format-btn" onclick="formatDoc('insertOrderedList')">數字</button>
         </div>
         <div id="note-editor" contenteditable="true" data-placeholder="在此開始寫筆記..."></div>
     </div>
@@ -236,7 +250,7 @@
         newNoteBtn.onclick = newNote;
         noteEditor.oninput = () => {
             clearTimeout(saveTimer);
-            saveTimer = setTimeout(saveNote, 1000);
+            saveTimer = setTimeout(saveNote, 500);
         };
 
         function formatDoc(command) {
@@ -252,7 +266,6 @@
             }
             li.setAttribute('data-id', note.id);
 
-            // 在呼叫 updateNoteItemContent 之前，先建立並附加子元素
             const contentWrapper = document.createElement('div');
             const title = document.createElement('div');
             title.className = 'note-title';
@@ -275,7 +288,6 @@
 
             li.onclick = () => selectNote(note.id);
             
-            // 這裡才是呼叫 updateNoteItemContent
             updateNoteItemContent(li, note.content);
             
             noteList.prepend(li);
@@ -286,7 +298,6 @@
             const titleElement = item.querySelector('.note-title');
             const previewElement = item.querySelector('.note-preview');
 
-            // 確保元素存在
             if (!titleElement || !previewElement) {
                 console.error("無法找到筆記項目的標題或預覽元素。");
                 return;
