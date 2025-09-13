@@ -1,7 +1,7 @@
 {
   "name": "Memoroa",
   "short_name": "Memoroa",
-  "description": "筆記應用程式。",
+  "description": "紀載依竊",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -19,5 +19,6 @@
     }
   ]
 }
+
 
 
