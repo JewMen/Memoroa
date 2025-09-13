@@ -1,6 +1,6 @@
 {
-  "name": "CanlinAirStean",
-  "short_name": "CanlinAirStean",
+  "name": "Memoroa",
+  "short_name": "Memoroa",
   "description": "筆記應用程式。",
   "start_url": "./",
   "display": "standalone",
@@ -19,4 +19,5 @@
     }
   ]
 }
+
 
