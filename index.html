@@ -1,432 +1,126 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memoroa</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memoroa</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --bg: #f2f6fb;
+      --card: #fff;
+      --accent: #1976d2;
+      --muted: #6b7280;
+    }
 
-    <link rel="manifest" href="./manifest.json">
+    * {
+      box-sizing: border-box;
+    }
 
-    <style>
-        /* CSS 變數定義，方便管理顏色 */
-        :root {
-            --bg-color: #f5f7fa;
-            --sidebar-bg: #ffffff;
-            --note-item-hover: #eef1f5;
-            --note-item-active: #e0e9f0;
-            --primary-color: #007bff;
-            --btn-text-color: #ffffff;
-            --border-color: #e0e6ed;
-            --text-color: #333;
-            --placeholder-color: #93a5b8;
-            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.05);
-            --delete-btn-color: #999;
-        }
+    body {
+      font-family: "Noto Sans TC", Arial, sans-serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 24px;
+    }
 
-        body {
-            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-            display: flex;
-            height: 100vh;
-            margin: 0;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            overflow: hidden;
-        }
+    h1 {
+      text-align: center;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
 
-        #sidebar {
-            width: 300px;
-            background-color: var(--sidebar-bg);
-            padding: 20px 0;
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            box-shadow: var(--shadow-light);
-            transition: width 0.3s ease;
-        }
+    .note-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--card);
+      padding: 16px;
+      border-radius: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
 
-        #new-note-btn {
-            background-color: var(--primary-color);
-            color: var(--btn-text-color);
-            border: none;
-            padding: 12px 20px;
-            margin: 0 20px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.2s ease, transform 0.1s ease;
-        }
-        #new-note-btn:hover {
-            background-color: #0056b3;
-            transform: translateY(-1px);
-        }
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      max-height: 400px;        /* ⬅ 加這個限制高度 */
+      overflow-y: auto;         /* ⬅ 文字超出時可滾動 */
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      resize: vertical;
+      background: #fff;
+    }
 
-        #note-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            flex-grow: 1;
-            overflow-y: auto;
-        }
+    button {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 8px 16px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
 
-        .note-item {
-            padding: 15px 20px;
-            cursor: pointer;
-            border-bottom: 1px solid var(--border-color);
-            transition: background-color 0.2s ease;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .note-item:hover {
-            background-color: var(--note-item-hover);
-        }
-        .note-item.active {
-            background-color: var(--note-item-active);
-            border-left: 4px solid var(--primary-color);
-            padding-left: 16px;
-        }
-        
-        .note-title {
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            flex-grow: 1;
-        }
-        .note-preview {
-            font-size: 14px;
-            color: var(--placeholder-color);
-            margin-top: 5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .delete-btn {
-            background: none;
-            border: none;
-            color: var(--delete-btn-color);
-            font-size: 18px;
-            cursor: pointer;
-            opacity: 0.5;
-            transition: opacity 0.2s ease, color 0.2s ease;
-            margin-left: 10px;
-        }
-        .delete-btn:hover {
-            color: red;
-            opacity: 1;
-        }
-        
-        #main-content {
-            flex-grow: 1;
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        #toolbar {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
-            background-color: var(--sidebar-bg);
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-        
-        .format-btn {
-            background-color: var(--note-item-hover);
-            border: 1px solid var(--border-color);
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 16px;
-        }
-        
-        #note-editor {
-            width: 100%;
-            flex-grow: 1;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 20px;
-            font-size: 18px;
-            line-height: 1.6;
-            background-color: var(--sidebar-bg);
-            box-shadow: var(--shadow-light);
-            transition: all 0.2s ease;
-            outline: none;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-        #note-editor:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-        }
-        
-        #note-editor[contenteditable="true"]:empty::before {
-            content: attr(data-placeholder);
-            color: var(--placeholder-color);
-        }
+    button:hover {
+      background: #155a9a;
+    }
 
-        /* 箭頭符號樣式 */
-        #note-editor ul li {
-            list-style-type: none;
-        }
+    .notes-list {
+      margin-top: 20px;
+      max-height: 300px;
+      overflow-y: auto;         /* ⬅ 已存筆記區也加滾軸 */
+    }
 
-        #note-editor ul li::before {
-            content: '➣';
-            color: var(--primary-color);
-            display: inline-block;
-            width: 1em;
-            margin-left: -1em;
-        }
-
-        /* 手機版適應性設計 */
-        @media (max-width: 768px) {
-            body {
-                flex-direction: column;
-            }
-            #sidebar {
-                width: 100%;
-                height: 35vh; 
-                border-right: none;
-                border-bottom: 1px solid var(--border-color);
-                padding: 10px 0;
-            }
-            #new-note-btn {
-                margin: 0 15px 15px; 
-                padding: 10px 15px;
-            }
-            #note-list {
-                flex-grow: 1;
-                overflow-y: auto;
-                padding-bottom: 10px;
-            }
-            .note-item {
-                padding: 12px 15px;
-            }
-
-            #main-content {
-                flex-grow: 1;
-                padding: 15px;
-            }
-            
-            #note-editor {
-                width: calc(100% - 2px); 
-                box-sizing: border-box; 
-                min-height: 150px; 
-                height: auto;
-            }
-        }
-    </style>
+    .note-item {
+      background: #f9fafb;
+      padding: 8px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #e5e7eb;
+    }
+  </style>
 </head>
 <body>
-    <div id="sidebar">
-        <button id="new-note-btn">＋ 新增筆記</button>
-        <ul id="note-list"></ul>
-    </div>
+  <h1>Memoroa</h1>
 
-    <div id="main-content">
-        <div id="toolbar">
-            <button class="format-btn" onclick="formatDoc('bold')"><b>粗體</b></button>
-            <button class="format-btn" onclick="formatDoc('italic')"><i>斜體</i></button>
-            <button class="format-btn" onclick="formatDoc('insertUnorderedList')">項目</button>
-            <button class="format-btn" onclick="formatDoc('insertOrderedList')">數字</button>
-        </div>
-        <div id="note-editor" contenteditable="true" data-placeholder="在此開始寫筆記..."></div>
-    </div>
+  <div class="note-container">
+    <textarea id="noteInput" placeholder="寫下你的筆記..."></textarea>
+    <button id="saveBtn">儲存筆記</button>
 
-    <script>
-        const noteList = document.getElementById('note-list');
-        const noteEditor = document.getElementById('note-editor');
-        const newNoteBtn = document.getElementById('new-note-btn');
-        let currentNoteId = null;
-        let saveTimer;
+    <div class="notes-list" id="notesList"></div>
+  </div>
 
-        window.onload = loadNotes;
-        newNoteBtn.onclick = newNote;
-        noteEditor.oninput = () => {
-            clearTimeout(saveTimer);
-            saveTimer = setTimeout(saveNote, 500);
-        };
+  <script>
+    const noteInput = document.getElementById('noteInput');
+    const saveBtn = document.getElementById('saveBtn');
+    const notesList = document.getElementById('notesList');
 
-        function formatDoc(command) {
-            document.execCommand(command, false, null);
-            noteEditor.focus();
-        }
+    function loadNotes() {
+      const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+      notesList.innerHTML = '';
+      notes.forEach((note, index) => {
+        const div = document.createElement('div');
+        div.className = 'note-item';
+        div.textContent = note;
+        notesList.appendChild(div);
+      });
+    }
 
-        function addNoteToSidebar(note, isActive = false) {
-            const li = document.createElement('li');
-            li.className = 'note-item';
-            if (isActive) {
-                li.classList.add('active');
-            }
-            li.setAttribute('data-id', note.id);
+    saveBtn.addEventListener('click', () => {
+      const text = noteInput.value.trim();
+      if (text !== '') {
+        const notes = JSON.parse(localStorage.getItem('notes') || '[]');
+        notes.push(text);
+        localStorage.setItem('notes', JSON.stringify(notes));
+        noteInput.value = '';
+        loadNotes();
+      }
+    });
 
-            const contentWrapper = document.createElement('div');
-            const title = document.createElement('div');
-            title.className = 'note-title';
-            const preview = document.createElement('div');
-            preview.className = 'note-preview';
-            
-            contentWrapper.appendChild(title);
-            contentWrapper.appendChild(preview);
-
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.textContent = '×';
-            deleteBtn.onclick = (e) => {
-                e.stopPropagation();
-                deleteNote(note.id);
-            };
-
-            li.appendChild(contentWrapper);
-            li.appendChild(deleteBtn);
-
-            li.onclick = () => selectNote(note.id);
-            
-            updateNoteItemContent(li, note.content);
-            
-            noteList.prepend(li);
-            return li;
-        }
-        
-        function updateNoteItemContent(item, content) {
-            const titleElement = item.querySelector('.note-title');
-            const previewElement = item.querySelector('.note-preview');
-
-            if (!titleElement || !previewElement) {
-                console.error("無法找到筆記項目的標題或預覽元素。");
-                return;
-            }
-
-            const plainTextWithNewlines = content
-                .replace(/<br\s*\/?>/gi, "\n")
-                .replace(/<\/div>|<\/p>/gi, "\n");
-            
-            const plainText = plainTextWithNewlines.replace(/<[^>]*>?/gm, '').trim();
-            const lines = plainText.split('\n').filter(line => line.trim() !== '');
-
-            titleElement.textContent = lines[0] ? lines[0].substring(0, 30) : "新筆記";
-            previewElement.textContent = lines[1] ? lines[1] : "無預覽";
-        }
-
-        function loadNotes() {
-            noteList.innerHTML = '';
-            const notes = getNotesFromStorage();
-            
-            notes.forEach(note => addNoteToSidebar(note));
-
-            if (notes.length > 0) {
-                selectNote(notes[0].id);
-            } else {
-                newNote();
-            }
-        }
-        
-        function saveNote() {
-            const content = noteEditor.innerHTML;
-            let notes = getNotesFromStorage();
-            
-            if (!content.trim() && currentNoteId) {
-                deleteNote(currentNoteId);
-                return;
-            }
-            
-            if (currentNoteId) {
-                const noteToUpdate = notes.find(note => note.id === currentNoteId);
-                if (noteToUpdate && noteToUpdate.content !== content) {
-                    noteToUpdate.content = content;
-                    const item = document.querySelector(`.note-item[data-id="${currentNoteId}"]`);
-                    if (item) {
-                        updateNoteItemContent(item, content);
-                    }
-                }
-            } else if (content.trim()) {
-                const newNote = {
-                    id: Date.now().toString(),
-                    content: content
-                };
-                notes.unshift(newNote);
-                currentNoteId = newNote.id;
-                
-                document.querySelectorAll('.note-item.active').forEach(item => item.classList.remove('active'));
-                
-                addNoteToSidebar(newNote, true);
-            }
-            
-            localStorage.setItem('notes', JSON.stringify(notes));
-        }
-
-        function selectNote(id) {
-            const notes = getNotesFromStorage();
-            const selectedNote = notes.find(note => note.id === id);
-            
-            if (selectedNote) {
-                noteEditor.innerHTML = selectedNote.content;
-                currentNoteId = id;
-
-                document.querySelectorAll('.note-item').forEach(item => {
-                    item.classList.toggle('active', item.getAttribute('data-id') === id);
-                });
-                noteEditor.focus();
-            }
-        }
-        
-        function newNote() {
-            noteEditor.innerHTML = '';
-            currentNoteId = null;
-            document.querySelectorAll('.note-item.active').forEach(item => item.classList.remove('active'));
-            noteEditor.focus();
-        }
-        
-        function deleteNote(id) {
-            let notes = getNotesFromStorage();
-            notes = notes.filter(note => note.id !== id);
-            localStorage.setItem('notes', JSON.stringify(notes));
-
-            const itemToRemove = document.querySelector(`.note-item[data-id="${id}"]`);
-            if (itemToRemove) {
-                itemToRemove.remove();
-            }
-            
-            if (currentNoteId === id) {
-                if (notes.length > 0) {
-                    selectNote(notes[0].id);
-                } else {
-                    newNote();
-                }
-            }
-        }
-
-        function getNotesFromStorage() {
-            try {
-                const notesJSON = localStorage.getItem('notes');
-                return notesJSON ? JSON.parse(notesJSON) : [];
-            } catch (e) {
-                console.error("無法解析 localStorage 中的筆記", e);
-                return [];
-            }
-        }
-        
-        // PWA - 註冊 Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(registration => {
-                        console.log('Service Worker registered: ', registration);
-                    })
-                    .catch(registrationError => {
-                        console.log('Service Worker registration failed: ', registrationError);
-                    });
-            });
-        }
-    </script>
+    loadNotes();
+  </script>
 </body>
 </html>
-
-
-
