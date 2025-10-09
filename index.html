@@ -6,7 +6,6 @@
   <title>Memoroa</title>
   <link rel="manifest" href="./manifest.json">
   <style>
-    /* === CSS 變數定義 === */
     :root {
       --bg-color: #f5f7fa;
       --sidebar-bg: #ffffff;
@@ -31,7 +30,6 @@
       overflow: hidden;
     }
 
-    /* === 側邊欄 === */
     #sidebar {
       width: 300px;
       background-color: var(--sidebar-bg);
@@ -122,12 +120,12 @@
       opacity: 1;
     }
 
-    /* === 主內容區 === */
     #main-content {
       flex-grow: 1;
       padding: 30px;
       display: flex;
       flex-direction: column;
+      min-height: 0; /* ✅ 關鍵1：允許內層滾動 */
     }
 
     #toolbar {
@@ -165,6 +163,7 @@
       overflow-y: auto;
       white-space: pre-wrap;
       word-wrap: break-word;
+      min-height: 0; /* ✅ 關鍵2：確保滾軸正常 */
     }
 
     #note-editor:focus {
@@ -177,7 +176,6 @@
       color: var(--placeholder-color);
     }
 
-    /* 箭頭符號樣式 */
     #note-editor ul li {
       list-style-type: none;
     }
@@ -190,7 +188,6 @@
       margin-left: -1em;
     }
 
-    /* === 手機版適應性 === */
     @media (max-width: 768px) {
       body {
         flex-direction: column;
@@ -233,15 +230,12 @@
     }
   </style>
 </head>
-
 <body>
-  <!-- 側邊欄 -->
   <div id="sidebar">
     <button id="new-note-btn">＋ 新增筆記</button>
     <ul id="note-list"></ul>
   </div>
 
-  <!-- 主內容區 -->
   <div id="main-content">
     <div id="toolbar">
       <button class="format-btn" onclick="formatDoc('bold')"><b>粗體</b></button>
@@ -256,7 +250,6 @@
     const noteList = document.getElementById('note-list');
     const noteEditor = document.getElementById('note-editor');
     const newNoteBtn = document.getElementById('new-note-btn');
-
     let currentNoteId = null;
     let saveTimer;
 
@@ -283,7 +276,6 @@
       title.className = 'note-title';
       const preview = document.createElement('div');
       preview.className = 'note-preview';
-
       contentWrapper.appendChild(title);
       contentWrapper.appendChild(preview);
 
@@ -298,7 +290,6 @@
       li.appendChild(contentWrapper);
       li.appendChild(deleteBtn);
       li.onclick = () => selectNote(note.id);
-
       updateNoteItemContent(li, note.content);
       noteList.prepend(li);
       return li;
@@ -308,14 +299,11 @@
       const titleElement = item.querySelector('.note-title');
       const previewElement = item.querySelector('.note-preview');
       if (!titleElement || !previewElement) return;
-
       const plainTextWithNewlines = content
         .replace(/<br\s*\/?>/gi, "\n")
         .replace(/<\/div>|<\/p>/gi, "\n");
-
       const plainText = plainTextWithNewlines.replace(/<[^>]*>?/gm, '').trim();
       const lines = plainText.split('\n').filter(line => line.trim() !== '');
-
       titleElement.textContent = lines[0] ? lines[0].substring(0, 30) : "新筆記";
       previewElement.textContent = lines[1] ? lines[1] : "無預覽";
     }
@@ -324,22 +312,17 @@
       noteList.innerHTML = '';
       const notes = getNotesFromStorage();
       notes.forEach(note => addNoteToSidebar(note));
-      if (notes.length > 0) {
-        selectNote(notes[0].id);
-      } else {
-        newNote();
-      }
+      if (notes.length > 0) selectNote(notes[0].id);
+      else newNote();
     }
 
     function saveNote() {
       const content = noteEditor.innerHTML;
       let notes = getNotesFromStorage();
-
       if (!content.trim() && currentNoteId) {
         deleteNote(currentNoteId);
         return;
       }
-
       if (currentNoteId) {
         const noteToUpdate = notes.find(note => note.id === currentNoteId);
         if (noteToUpdate && noteToUpdate.content !== content) {
@@ -354,7 +337,6 @@
         document.querySelectorAll('.note-item.active').forEach(item => item.classList.remove('active'));
         addNoteToSidebar(newNote, true);
       }
-
       localStorage.setItem('notes', JSON.stringify(notes));
     }
 
@@ -382,16 +364,11 @@
       let notes = getNotesFromStorage();
       notes = notes.filter(note => note.id !== id);
       localStorage.setItem('notes', JSON.stringify(notes));
-
       const itemToRemove = document.querySelector(`.note-item[data-id="${id}"]`);
       if (itemToRemove) itemToRemove.remove();
-
       if (currentNoteId === id) {
-        if (notes.length > 0) {
-          selectNote(notes[0].id);
-        } else {
-          newNote();
-        }
+        if (notes.length > 0) selectNote(notes[0].id);
+        else newNote();
       }
     }
 
@@ -405,7 +382,6 @@
       }
     }
 
-    // PWA - 註冊 Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
