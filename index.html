@@ -233,7 +233,7 @@
 
   <script>
     /* ===========================
-       原本筆記 App 的核心程式（略作排版） 
+       原本筆記 App 的核心程式（略作排版）
        我保留並未變更功能行為（只有整合備份/還原功能）
        ============================ */
 
@@ -455,8 +455,19 @@
 
     // File writing using File System Access API (save dialog)
     async function saveFileToDevice(arrayBuffer, suggestedName = 'memoroa.dat') {
+      // Fallback: if showSaveFilePicker isn't available, trigger download
       if (!window.showSaveFilePicker) {
-        throw new Error('此瀏覽器不支援 File System Access API');
+        // create blob and download
+        const blob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = suggestedName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        return null;
       }
       const opts = {
         types: [{
@@ -472,21 +483,34 @@
       return handle;
     }
 
-    // File reading using file picker
+    // File reading using file picker (with fallback to input)
     async function openFileFromDevice() {
-      if (!window.showOpenFilePicker) {
-        throw new Error('此瀏覽器不支援 File System Access API');
+      if (window.showOpenFilePicker) {
+        const [handle] = await window.showOpenFilePicker({
+          types: [{
+            description: 'Memoroa backup',
+            accept: { 'application/octet-stream': ['.dat'] }
+          }],
+          multiple: false
+        });
+        const file = await handle.getFile();
+        const arrayBuffer = await file.arrayBuffer();
+        return { arrayBuffer, handle, name: file.name };
+      } else {
+        // fallback: create hidden file input
+        return await new Promise((resolve, reject) => {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.dat,application/octet-stream';
+          input.onchange = async (e) => {
+            const f = e.target.files[0];
+            if (!f) { reject(new Error('使用者取消')); return; }
+            const arrayBuffer = await f.arrayBuffer();
+            resolve({ arrayBuffer, handle: null, name: f.name });
+          };
+          input.click();
+        });
       }
-      const [handle] = await window.showOpenFilePicker({
-        types: [{
-          description: 'Memoroa backup',
-          accept: { 'application/octet-stream': ['.dat'] }
-        }],
-        multiple: false
-      });
-      const file = await handle.getFile();
-      const arrayBuffer = await file.arrayBuffer();
-      return { arrayBuffer, handle, name: file.name };
     }
 
     // UI: prompt user for password (simple)
@@ -536,7 +560,7 @@
       }
     });
 
-    // PWA - 註冊 Service Worker（保留你原本的） 
+    // PWA - 註冊 Service Worker（保留你原本的）
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
