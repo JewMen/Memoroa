@@ -9,17 +9,10 @@
     body {
         background-color: #ffffff;
         margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+        padding: 20px;
         font-family: Arial, sans-serif;
     }
-    #app {
-        width: 100%;
-        max-width: 600px;
-        padding: 20px;
-    }
+
     textarea {
         width: 100%;
         height: 300px;
@@ -27,21 +20,25 @@
         font-size: 16px;
         box-sizing: border-box;
         resize: none;
+        border: 2px solid black;
     }
+
     .btn {
         width: 100%;
-        padding: 12px;
-        margin-top: 10px;
+        padding: 14px;
+        margin-top: 12px;
         font-size: 18px;
         cursor: pointer;
-        background-color: #0080ff;
+        background-color: #0087ff;
         color: white;
         border: none;
-        border-radius: 8px;
+        border-radius: 6px;
     }
+
     .btn:active {
-        opacity: 0.7;
+        opacity: 0.8;
     }
+
     #msg {
         margin-top: 12px;
         font-size: 16px;
@@ -52,20 +49,16 @@
 </head>
 <body>
 
-<div id="app">
-    <textarea id="memo" placeholder="請輸入內容..."></textarea>
+<textarea id="memo" placeholder="請輸入內容..."></textarea>
 
-    <button class="btn" id="setPass">設定密碼</button>
-    <button class="btn" id="backupBtn">備份到裝置</button>
-    <button class="btn" id="restoreBtn">從裝置還原</button>
+<button class="btn" id="setPass">設定密碼</button>
+<button class="btn" id="backupBtn">備份到裝置</button>
+<button class="btn" id="restoreBtn">從裝置還原</button>
 
-    <p id="msg"></p>
-</div>
+<p id="msg"></p>
 
 <script>
-// ======================
-// 加密 / 解密（方案 A）
-// ======================
+// ================ 加密 ================
 async function digestMessage(message) {
     const msgUint8 = new TextEncoder().encode(message);
     const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
@@ -76,7 +69,9 @@ async function digestMessage(message) {
 function xorEncrypt(data, key) {
     let encrypted = "";
     for (let i = 0; i < data.length; i++) {
-        encrypted += String.fromCharCode(data.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+        encrypted += String.fromCharCode(
+            data.charCodeAt(i) ^ key.charCodeAt(i % key.length)
+        );
     }
     return encrypted;
 }
@@ -84,14 +79,11 @@ function xorEncrypt(data, key) {
 function toBase64(str) {
     return btoa(unescape(encodeURIComponent(str)));
 }
-
 function fromBase64(b64) {
     return decodeURIComponent(escape(atob(b64)));
 }
 
-// ======================
-// 密碼處理
-// ======================
+// ================ 密碼 ================
 let passwordKey = "";
 
 document.getElementById("setPass").onclick = async () => {
@@ -102,9 +94,7 @@ document.getElementById("setPass").onclick = async () => {
     document.getElementById("msg").innerText = "密碼設定成功！";
 };
 
-// ======================
-// 備份功能
-// ======================
+// ================ 儲存檔案（無 UI 變動）===============
 async function saveFile(content) {
     try {
         const blob = new Blob([content], { type: "text/plain" });
@@ -118,13 +108,12 @@ async function saveFile(content) {
         await writable.write(blob);
         await writable.close();
         return true;
-
     } catch (err) {
         return false;
     }
 }
 
-// 修正：滑鼠點擊 + Enter 都能觸發
+// ================ 備份（修正手機/滑鼠/Enter）===============
 document.getElementById("backupBtn").addEventListener("click", async () => {
     if (!passwordKey) {
         document.getElementById("msg").innerText = "請先設定密碼！";
@@ -136,13 +125,10 @@ document.getElementById("backupBtn").addEventListener("click", async () => {
     const b64 = toBase64(encrypted);
 
     const ok = await saveFile(b64);
-
     document.getElementById("msg").innerText = ok ? "備份完成！" : "備份失敗！";
 });
 
-// ======================
-// 還原功能
-// ======================
+// ================ 還原 ================
 document.getElementById("restoreBtn").onclick = async () => {
     try {
         const [fileHandle] = await window.showOpenFilePicker({
@@ -153,7 +139,7 @@ document.getElementById("restoreBtn").onclick = async () => {
         const text = await file.text();
 
         if (!passwordKey) {
-            document.getElementById("msg").innerText = "請先設定密碼（必須與備份密碼相同）！";
+            document.getElementById("msg").innerText = "請先設定密碼（需與備份密碼相同）";
             return;
         }
 
