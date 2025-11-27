@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Memoroa</title>
+  <link rel="manifest" href="./manifest.json">
   <style>
     /* --- 還原的主要版面樣式（貼近你提供的截圖） --- */
     :root{
@@ -160,20 +161,20 @@
 <body>
   <div class="app">
     <div class="sidebar">
-      <button class="btn-new" id="btnNew">＋ 新增筆記</button>
+      <button class="btn-new" id="btnNew" type="button">＋ 新增筆記</button>
       <div class="note-list" id="noteList"></div>
     </div>
 
     <div class="main">
       <div class="toolbar">
-        <button class="format-btn" data-cmd="bold"><b>粗體</b></button>
-        <button class="format-btn" data-cmd="italic"><i>斜體</i></button>
-        <button class="format-btn" data-cmd="insertUnorderedList">項目</button>
-        <button class="format-btn" data-cmd="insertOrderedList">數字</button>
+        <button class="format-btn" data-cmd="bold" type="button"><b>粗體</b></button>
+        <button class="format-btn" data-cmd="italic" type="button"><i>斜體</i></button>
+        <button class="format-btn" data-cmd="insertUnorderedList" type="button">項目</button>
+        <button class="format-btn" data-cmd="insertOrderedList" type="button">數字</button>
 
         <div class="right-actions">
-          <button class="backup-btn" id="backupBtn">備份到裝置</button>
-          <button class="restore-btn" id="restoreBtn">從裝置還原</button>
+          <button class="backup-btn" id="backupBtn" type="button">備份到裝置</button>
+          <button class="restore-btn" id="restoreBtn" type="button">從裝置還原</button>
         </div>
       </div>
 
@@ -183,22 +184,20 @@
     </div>
   </div>
 
-  <!-- 輕量密碼 modal（用於備份/還原時收集密碼，避免瀏覽器 gesture 問題） -->
+  <!-- 密碼 modal -->
   <div class="pw-modal" id="pwModal" aria-hidden="true">
     <div class="pw-card">
       <h3 id="pwTitle">請輸入備份密碼</h3>
       <input id="pwInput" type="password" placeholder="輸入密碼，至少 4 字元" />
       <div class="pw-actions">
-        <button class="pw-cancel" id="pwCancel">取消</button>
-        <button class="pw-ok" id="pwOk">確定</button>
+        <button class="pw-cancel" id="pwCancel" type="button">取消</button>
+        <button class="pw-ok" id="pwOk" type="button">確定</button>
       </div>
     </div>
   </div>
 
 <script>
-/* ========== 重要：保留 UI 原樣，但修正備份/還原 UX（用內嵌 modal 收密碼） ========== */
-
-/* 簡單筆記列表 + 編輯器（保留你原本功能） */
+/* ========= 筆記 App 基本行為（保留原本邏輯，修正 bug） ========= */
 const noteListEl = document.getElementById('noteList');
 const editor = document.getElementById('note-editor');
 const btnNew = document.getElementById('btnNew');
@@ -211,7 +210,6 @@ function getNotesFromStorage(){
   try{ return JSON.parse(localStorage.getItem('notes')||'[]'); }
   catch(e){ return []; }
 }
-
 function persistNotes(){ localStorage.setItem('notes', JSON.stringify(notes)); }
 
 function renderSidebar(){
@@ -222,7 +220,8 @@ function renderSidebar(){
     el.style.borderBottom='1px solid #f0f0f0';
     el.style.cursor='pointer';
     el.textContent = ( (n.content||'').replace(/<[^>]+>/g,'') ).split('\n')[0] || '新筆記';
-    el.addEventListener('click', ()=>selectNote(n.id));
+    // 使用 mousedown 減少 contentEditable focus 衝突
+    el.addEventListener('mousedown', ()=>selectNote(n.id));
     noteListEl.appendChild(el);
   });
 }
@@ -266,12 +265,10 @@ function saveNoteIfNeeded(){
 }
 editor.addEventListener('input', saveNoteIfNeeded);
 
-/* load on start */
 notes = getNotesFromStorage();
 if(notes.length===0) newNote();
 else { renderSidebar(); selectNote(notes[0].id); }
 
-/* format buttons */
 document.querySelectorAll('.format-btn').forEach(btn=>{
   btn.addEventListener('click', ()=> {
     const cmd = btn.getAttribute('data-cmd');
@@ -280,11 +277,7 @@ document.querySelectorAll('.format-btn').forEach(btn=>{
   });
 });
 
-/* ================= backup/restore 加密邏輯（AES-GCM 也可，但用簡單 PBKDF+AES 會較複雜）
-   我這裡用 WebCrypto 的 PBKDF2 + AES-GCM 的正規流程（和你提供邏輯一致）
-   但最重要：**收密碼的 UI 改成 modal** -> 可保持 user gesture on mobile。
-   ===================================================================== */
-
+/* ========== 加密備份/還原邏輯（WebCrypto AES-GCM + PBKDF2） ========== */
 const pwModal = document.getElementById('pwModal');
 const pwInput = document.getElementById('pwInput');
 const pwOk = document.getElementById('pwOk');
@@ -340,9 +333,8 @@ async function decryptNotes(arrayBuffer, password){
   return JSON.parse(new TextDecoder().decode(plain));
 }
 
-/* save file helper with fallback (download link) */
+/* save helper with fallback */
 async function saveArrayBufferToDevice(buf, suggestedName='memoroa.dat'){
-  // if showSaveFilePicker available, use it (must be directly called after user event)
   if(window.showSaveFilePicker){
     const opts = { suggestedName, types:[{ description:'Memoroa backup', accept:{ 'application/octet-stream':['.dat'] }}] };
     const handle = await window.showSaveFilePicker(opts);
@@ -351,7 +343,6 @@ async function saveArrayBufferToDevice(buf, suggestedName='memoroa.dat'){
     await writable.close();
     return true;
   } else {
-    // fallback: trigger download
     const blob = new Blob([buf], { type:'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -365,7 +356,7 @@ async function saveArrayBufferToDevice(buf, suggestedName='memoroa.dat'){
   }
 }
 
-/* open file helper with fallback (input) */
+/* open helper with fallback */
 async function openFileFromDevice(){
   if(window.showOpenFilePicker){
     const [handle] = await window.showOpenFilePicker({ types:[{ description:'Memoroa backup', accept:{ 'application/octet-stream':['.dat'] }}], multiple:false });
@@ -388,10 +379,7 @@ async function openFileFromDevice(){
   }
 }
 
-/* ---------- Modal 控制器：顯示 modal 並等候使用者輸入密碼（非 window.prompt） ----------
-   這樣在 mobile/desktop 都能維持「user gesture」，避免 showSaveFilePicker 被視為非使用者觸發。
-   用法： await askPassword('備份：請輸入密碼') -> 回傳輸入字串或 throw('cancel')
-*/
+/* ---------- Modal 控制：等使用者在 modal 裡按確定（這保證後續 showSaveFilePicker 是 user gesture） ---------- */
 function askPassword(title){
   return new Promise((resolve,reject)=>{
     pwTitle.textContent = title || '請輸入密碼';
@@ -425,24 +413,17 @@ function askPassword(title){
   });
 }
 
-/* ---------- 備份流程（按鈕事件） ---------- */
-document.getElementById('backupBtn').addEventListener('click', async (e)=>{
+/* ---------- 備份流程 ---------- */
+document.getElementById('backupBtn').addEventListener('click', async ()=>{
   try{
-    // 1) 先取得 notes（同步）
     const currentNotes = getNotesFromStorage();
-
     if(!currentNotes || currentNotes.length===0){
       alert('目前沒有筆記可備份。');
       return;
     }
-
-    // 2) 透過內嵌 modal 取得密碼（確保在同一個使用者操作流程）
     const password = await askPassword('備份：請輸入備份密碼（請記住）');
-
-    // 3) 加密並儲存
     const buf = await encryptNotes(currentNotes, password);
     await saveArrayBufferToDevice(buf, 'memoroa.dat');
-
     alert('備份成功（已下載或寫入裝置）。');
   }catch(err){
     if(err && err.message==='使用者取消') return;
@@ -455,10 +436,8 @@ document.getElementById('backupBtn').addEventListener('click', async (e)=>{
 document.getElementById('restoreBtn').addEventListener('click', async ()=>{
   try{
     const buf = await openFileFromDevice();
-    // 取得密碼
     const password = await askPassword('還原：請輸入備份檔案的密碼');
     const notesArr = await decryptNotes(buf, password);
-    // 覆蓋 localStorage（按你之前的要求）
     localStorage.setItem('notes', JSON.stringify(notesArr));
     notes = notesArr;
     renderSidebar();
@@ -471,12 +450,21 @@ document.getElementById('restoreBtn').addEventListener('click', async ()=>{
   }
 });
 
-/* optional: close modal on outside click (保守處理) */
+/* optional: 不自動關閉 modal 的點擊（保守處理） */
 pwModal.addEventListener('click', (e)=>{
   if(e.target===pwModal){
-    // do nothing or close? 我選擇不自動關閉，避免誤觸
+    // 保守：不自動關閉，避免誤觸
   }
 });
+
+/* PWA: 註冊 Service Worker（如果有） */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(() => console.log('Service Worker registered'))
+      .catch(err => console.log('SW error:', err));
+  });
+}
 </script>
 </body>
 </html>
