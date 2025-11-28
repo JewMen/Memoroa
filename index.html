@@ -29,6 +29,21 @@
   </div>
 
   <script src="./app.js"></script>
+    <!-- Password modal (加入到 body 底部) -->
+  <div id="pwd-modal" class="pwd-modal" aria-hidden="true">
+    <div class="pwd-modal-backdrop"></div>
+    <div class="pwd-modal-panel" role="dialog" aria-modal="true" aria-labelledby="pwd-modal-title">
+      <h3 id="pwd-modal-title">輸入密碼</h3>
+      <input id="pwd-input" type="password" placeholder="請輸入密碼" />
+      <div class="pwd-modal-actions">
+        <button id="pwd-cancel" type="button">取消</button>
+        <button id="pwd-ok" type="button">確定</button>
+      </div>
+      <div id="pwd-error" class="pwd-error" style="display:none;color:#c33;margin-top:8px;font-size:13px"></div>
+    </div>
+  </div>
+
 </body>
 </html>
+
 
