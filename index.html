@@ -6,6 +6,7 @@
   <title>Memoroa</title>
   <link rel="manifest" href="./manifest.json">
   <style>
+    /* 你的原本 CSS 完整保留（不變） */
     :root {
       --bg-color: #f5f7fa;
       --sidebar-bg: #ffffff;
@@ -233,11 +234,7 @@
   </div>
 
   <script>
-    /* ===========================
-       原本筆記 App 的核心程式（略作排版）
-       我保留並未變更功能行為（只有整合備份/還原功能）
-       並修正 select 與 querySelector 的 bug
-       ============================ */
+    /* 你的原本 JS - 除了備份/儲存那段有調整順序，其餘維持原樣 */
 
     const noteList = document.getElementById('note-list');
     const noteEditor = document.getElementById('note-editor');
@@ -286,9 +283,7 @@
       li.appendChild(contentWrapper);
       li.appendChild(deleteBtn);
 
-      // 使用 mousedown 而不是 click，避免 focus/selection 與 contentEditable 衝突
       li.addEventListener('mousedown', (e) => {
-        // 如果點擊到刪除按鈕，跳過選取
         if (e.target.closest('.delete-btn')) return;
         selectNote(note.id);
       });
@@ -330,7 +325,6 @@
         const noteToUpdate = notes.find(note => note.id === currentNoteId);
         if (noteToUpdate && noteToUpdate.content !== content) {
           noteToUpdate.content = content;
-          // 修正：selector 必須是字串（使用 template literal）
           const item = document.querySelector(`.note-item[data-id="${currentNoteId}"]`);
           if (item) updateNoteItemContent(item, content);
         }
@@ -368,7 +362,6 @@
       let notes = getNotesFromStorage();
       notes = notes.filter(note => note.id !== id);
       localStorage.setItem('notes', JSON.stringify(notes));
-      // 修正：selector 必須是字串（使用 template literal）
       const itemToRemove = document.querySelector(`.note-item[data-id="${id}"]`);
       if (itemToRemove) itemToRemove.remove();
       if (currentNoteId === id) {
@@ -387,26 +380,16 @@
       }
     }
 
-    /* ===========================
-       以下為 File System + AES 加密備份/還原程式
-       - 檔名：memoroa.dat
-       - 格式： "MEMO" (4 bytes) + salt(16) + iv(12) + ciphertext
-       - 密鑰由使用者輸入密碼透過 PBKDF2 派生（避免把 key 存在瀏覽器）
-       ============================ */
-
-    const FILE_MAGIC = 'MEMO'; // 4 bytes
+    /* ========== 加密 / 檔案處理 ========== */
+    const FILE_MAGIC = 'MEMO';
     const SALT_LEN = 16;
     const IV_LEN = 12;
     const PBKDF2_ITER = 150_000;
 
-    // helper: convert between hex/base64/etc
-    function bufToHex(buffer) {
-      return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2,'0')).join('');
-    }
-    function hexToBuf(hex) {
-      const bytes = new Uint8Array(hex.length/2);
-      for (let i=0;i<bytes.length;i++) bytes[i]=parseInt(hex.substr(i*2,2),16);
-      return bytes.buffer;
+    function getRandomBytes(len) {
+      const b = new Uint8Array(len);
+      crypto.getRandomValues(b);
+      return b;
     }
 
     async function deriveKeyFromPassword(password, salt) {
@@ -419,15 +402,9 @@
         passKey,
         { name: "AES-GCM", length: 256 },
         true,
-        ["encrypt","decrypt"]
+        ["encrypt", "decrypt"]
       );
       return key;
-    }
-
-    function getRandomBytes(len) {
-      const b = new Uint8Array(len);
-      crypto.getRandomValues(b);
-      return b;
     }
 
     async function encryptNotesToUint8(notesArray, password) {
@@ -437,7 +414,6 @@
       const encoder = new TextEncoder();
       const plaintext = encoder.encode(JSON.stringify(notesArray));
       const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, plaintext);
-      // assemble: magic + salt + iv + ciphertext
       const magicBuf = new TextEncoder().encode(FILE_MAGIC);
       const saltBuf = salt;
       const ivBuf = iv;
@@ -465,37 +441,41 @@
       return JSON.parse(decoded);
     }
 
-    // File writing using File System Access API (save dialog)
-    async function saveFileToDevice(arrayBuffer, suggestedName = 'memoroa.dat') {
-      // Fallback: if showSaveFilePicker isn't available, trigger download
-      if (!window.showSaveFilePicker) {
-        // create blob and download
-        const blob = new Blob([arrayBuffer], { type: 'application/octet-stream' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = suggestedName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        return null;
-      }
+    /* ---------- 新：在 user gesture 期間先 open save handle（若可用），再做加密 ---------- */
+    async function saveWithPickerFlow(notesArray, password) {
+      // 先取得 handle（必須在 user gesture 期間呼叫）
       const opts = {
         types: [{
           description: 'Memoroa backup',
           accept: { 'application/octet-stream': ['.dat'] }
         }],
-        suggestedName
+        suggestedName: 'memoroa.dat'
       };
       const handle = await window.showSaveFilePicker(opts);
+      // 接著做加密（async heavy），並寫入 handle
+      const arrayBuf = await encryptNotesToUint8(notesArray, password);
       const writable = await handle.createWritable();
-      await writable.write(arrayBuffer);
+      await writable.write(arrayBuf);
       await writable.close();
-      return handle;
+      return true;
     }
 
-    // File reading using file picker (with fallback to input)
+    // fallback: 做完加密再觸發下載（在某些瀏覽器會允許）
+    async function saveByDownloadFlow(notesArray, password, suggestedName='memoroa.dat') {
+      const arrayBuf = await encryptNotesToUint8(notesArray, password);
+      const blob = new Blob([arrayBuf], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = suggestedName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      return true;
+    }
+
+    // open file helper (keeps direct call in user gesture)
     async function openFileFromDevice() {
       if (window.showOpenFilePicker) {
         const [handle] = await window.showOpenFilePicker({
@@ -509,7 +489,6 @@
         const arrayBuffer = await file.arrayBuffer();
         return { arrayBuffer, handle, name: file.name };
       } else {
-        // fallback: create hidden file input
         return await new Promise((resolve, reject) => {
           const input = document.createElement('input');
           input.type = 'file';
@@ -525,7 +504,7 @@
       }
     }
 
-    // UI: prompt user for password (simple)
+    // prompt 密碼（同步 prompt 保留）
     function promptPassword(promptText = '請輸入備份密碼（會用來加密/解密）') {
       let p = prompt(promptText + '\n(請記住此密碼，忘記將無法還原檔案)');
       if (p === null) throw new Error('使用者取消');
@@ -536,7 +515,7 @@
       return p;
     }
 
-    // 主流程：備份
+    /* ---------- 備份按鈕：先在 gesture 內嘗試 open handle（若支援），再做加密與寫入 ---------- */
     backupBtn.addEventListener('click', async () => {
       try {
         const notes = getNotesFromStorage();
@@ -544,10 +523,29 @@
           alert('目前沒有任何筆記可備份。');
           return;
         }
+
         const password = promptPassword('備份：請輸入備份密碼（將用來加密）');
-        const arrayBuf = await encryptNotesToUint8(notes, password);
-        await saveFileToDevice(arrayBuf, 'memoroa.dat');
-        alert('已將備份檔案寫入裝置（memoroa.dat）。請妥善保存密碼以便還原。');
+
+        if (window.showSaveFilePicker) {
+          // 重要：call showSaveFilePicker BEFORE heavy async work (keeps gesture)
+          try {
+            await saveWithPickerFlow(notes, password);
+            alert('已將備份檔案寫入裝置（memoroa.dat）。請妥善保存密碼以便還原。');
+            return;
+          } catch (e) {
+            // 若使用者在檔案對話框取消或其他錯誤，回退到下載流程或顯示錯誤
+            if (e.name === 'AbortError' || e.message === 'The user aborted a request.') {
+              console.warn('使用者取消檔案選擇');
+              return;
+            }
+            console.warn('saveWithPickerFlow 發生錯誤，嘗試 fallback：', e);
+            // 追續到 fallback 下載流程
+          }
+        }
+
+        // fallback (下載)
+        await saveByDownloadFlow(notes, password, 'memoroa.dat');
+        alert('已將備份檔案下載到裝置（memoroa.dat）。請妥善保存密碼以便還原。');
       } catch (e) {
         if (e.message === '使用者取消') return;
         console.error(e);
@@ -555,13 +553,12 @@
       }
     });
 
-    // 主流程：還原
+    /* ---------- 還原流程 ---------- */
     restoreBtn.addEventListener('click', async () => {
       try {
         const { arrayBuffer, name } = await openFileFromDevice();
         const password = promptPassword('還原：請輸入備份檔案的密碼');
         const notes = await decryptUint8ToNotes(arrayBuffer, password);
-        // overwrite localStorage (你也可以改成合併)
         localStorage.setItem('notes', JSON.stringify(notes));
         loadNotes();
         alert('還原成功（已覆蓋目前筆記資料）。');
