@@ -151,6 +151,18 @@ body {
   cursor: pointer;
   font-size: 14px;
 }
+/* password modal */
+.pwd-modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 9999; }
+.pwd-modal[aria-hidden="false"] { display: flex; }
+.pwd-modal-backdrop { position:absolute; inset:0; background: rgba(0,0,0,0.45); }
+.pwd-modal-panel { position: relative; background: #fff; padding: 18px; border-radius: 10px; width: 92%; max-width: 420px; box-shadow: 0 8px 30px rgba(0,0,0,0.25); z-index: 1; }
+.pwd-modal-panel h3 { margin:0 0 10px 0; font-size:18px; }
+#pwd-input { width:100%; padding:10px 12px; font-size:16px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box; }
+.pwd-modal-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
+.pwd-modal-actions button { padding:8px 12px; border-radius:6px; border:none; cursor:pointer; font-weight:600; }
+#pwd-cancel { background:#eee; }
+#pwd-ok { background:#007bff; color:#fff; }
+.pwd-error { color:#c33; font-size:13px; margin-top:6px; }
 
 .backup-btn:hover { filter: brightness(0.95); }
 
