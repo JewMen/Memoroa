@@ -554,20 +554,69 @@
     });
 
     /* ---------- 還原流程 ---------- */
-    restoreBtn.addEventListener('click', async () => {
-      try {
-        const { arrayBuffer, name } = await openFileFromDevice();
-        const password = promptPassword('還原：請輸入備份檔案的密碼');
+   restoreBtn.addEventListener('click', async () => {
+    try {
+        let arrayBuffer;
+        let password;
+        
+        // --- 處理 showOpenFilePicker 支援的瀏覽器 (Chromium/新版) ---
+        if (window.showOpenFilePicker) {
+            // 步驟 1: 在 User Gesture 內開啟檔案選擇器
+            const [handle] = await window.showOpenFilePicker({
+                types: [{
+                    description: 'Memoroa backup',
+                    accept: { 'application/octet-stream': ['.dat'] }
+                }],
+                multiple: false
+            });
+            const file = await handle.getFile();
+            arrayBuffer = await file.arrayBuffer();
+
+            // 步驟 2: 檔案選好後，立即詢問密碼
+            password = promptPassword('還原：請輸入備份檔案的密碼');
+
+        } 
+        // --- 處理傳統 <input type="file"> 的瀏覽器 (舊版 Android 或其他) ---
+        else {
+            // 必須使用 Promise 來包裝，讓流程停等
+            const { arrayBuffer: buf, password: pw } = await new Promise((resolve, reject) => {
+                // 1. 動態建立 input 元素
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.dat,application/octet-stream';
+
+                input.onchange = async (e) => {
+                    const f = e.target.files[0];
+                    if (!f) { reject(new Error('使用者取消')); return; }
+                    
+                    // 2. 檔案選好 (onchange 觸發) 後，立即詢問密碼
+                    try {
+                        const password = promptPassword('還原：請輸入備份檔案的密碼');
+                        const arrayBuffer = await f.arrayBuffer();
+                        resolve({ arrayBuffer, password });
+                    } catch(err) {
+                        reject(err);
+                    }
+                };
+
+                input.click();
+            });
+            
+            arrayBuffer = buf;
+            password = pw;
+        }
+
+        // --- 共同的還原邏輯 ---
         const notes = await decryptUint8ToNotes(arrayBuffer, password);
         localStorage.setItem('notes', JSON.stringify(notes));
         loadNotes();
         alert('還原成功（已覆蓋目前筆記資料）。');
-      } catch (e) {
-        if (e.message === '使用者取消') return;
+    } catch (e) {
+        if (e.message === '使用者取消' || e.name === 'AbortError') return;
         console.error(e);
         alert('還原失敗：' + (e.message || e));
-      }
-    });
+    }
+});
 
     // PWA - 註冊 Service Worker（保留你原本的）
     if ('serviceWorker' in navigator) {
@@ -585,3 +634,4 @@
   </script>
 </body>
 </html>
+
