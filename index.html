@@ -541,6 +541,7 @@
 
     /* ---------- 備份按鈕：先在 gesture 內嘗試 open handle（若支援），再做加密與寫入 ---------- */
     /* ---------- 修正後的備份按鈕：先問密碼，再備份 (並加上 await) ---------- */
+/* ---------- 修正後的備份按鈕：先問密碼，再備份 (並加上 await) ---------- */
 backupBtn.addEventListener('click', async () => {
     try {
         const notes = getNotesFromStorage();
@@ -549,7 +550,7 @@ backupBtn.addEventListener('click', async () => {
             return;
         }
 
-        // 🌟 修正點 1：備份前詢問密碼，並使用 await 等待輸入完成
+        // 🌟 修正點 A: 備份前詢問密碼，並使用 await 等待輸入完成
         const password = await promptPassword('備份：請輸入備份密碼（將用來加密）');
 
         if (window.showSaveFilePicker) {
@@ -581,6 +582,7 @@ backupBtn.addEventListener('click', async () => {
 
     /* ---------- 還原流程 ---------- */
 /* ---------- 修正後的還原流程 (加上 await) ---------- */
+/* ---------- 修正後的還原流程 (所有 promptPassword 都加上 await) ---------- */
 restoreBtn.addEventListener('click', async () => {
     try {
         let arrayBuffer;
@@ -599,8 +601,8 @@ restoreBtn.addEventListener('click', async () => {
             const file = await handle.getFile();
             arrayBuffer = await file.arrayBuffer();
 
-            // 🌟 修正點 2：檔案選好後，使用 await 詢問密碼
-            password = await promptPassword('還原：請輸入備份檔案的密碼'); // 必須等待
+            // 🌟 修正點 B: 檔案選好後，使用 await 詢問密碼
+            password = await promptPassword('還原：請輸入備份檔案的密碼'); 
 
         } 
         // --- 處理傳統 <input type="file"> 的瀏覽器 (舊版 Android 或其他) ---
@@ -618,7 +620,8 @@ restoreBtn.addEventListener('click', async () => {
                     
                     // 2. 檔案選好 (onchange 觸發) 後，使用 await 詢問密碼
                     try {
-                        const password = await promptPassword('還原：請輸入備份檔案的密碼'); // 必須等待
+                        // 🌟 修正點 C: 必須在 promptPassword 前加上 await
+                        const password = await promptPassword('還原：請輸入備份檔案的密碼'); 
                         const arrayBuffer = await f.arrayBuffer();
                         resolve({ arrayBuffer, password });
                     } catch(err) {
@@ -641,8 +644,14 @@ restoreBtn.addEventListener('click', async () => {
         alert('還原成功（已覆蓋目前筆記資料）。');
     } catch (e) {
         if (e.message === '使用者取消' || e.name === 'AbortError') return;
+        
+        // 檢查是否為密碼錯誤
+        if (e.name === 'OperationError' && (e.message.includes('The operation failed for an operation-specific reason') || e.message.includes('Decryption failed'))) {
+            alert('還原失敗：密碼錯誤，請重新輸入。');
+        } else {
+            alert('還原失敗：' + (e.message || e));
+        }
         console.error(e);
-        alert('還原失敗：' + (e.message || e));
     }
 });
 
@@ -670,6 +679,7 @@ restoreBtn.addEventListener('click', async () => {
 </div>
 </body>
 </html>
+
 
 
 
