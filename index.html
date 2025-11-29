@@ -540,45 +540,48 @@
 }
 
     /* ---------- 備份按鈕：先在 gesture 內嘗試 open handle（若支援），再做加密與寫入 ---------- */
-    backupBtn.addEventListener('click', async () => {
-      try {
+    /* ---------- 修正後的備份按鈕：先問密碼，再備份 (並加上 await) ---------- */
+backupBtn.addEventListener('click', async () => {
+    try {
         const notes = getNotesFromStorage();
         if (!notes || notes.length === 0) {
-          alert('目前沒有任何筆記可備份。');
-          return;
+            alert('目前沒有任何筆記可備份。');
+            return;
         }
 
-        const password = promptPassword('備份：請輸入備份密碼（將用來加密）');
+        // 🌟 修正點 1：備份前詢問密碼，並使用 await 等待輸入完成
+        const password = await promptPassword('備份：請輸入備份密碼（將用來加密）');
 
         if (window.showSaveFilePicker) {
-          // 重要：call showSaveFilePicker BEFORE heavy async work (keeps gesture)
-          try {
-            await saveWithPickerFlow(notes, password);
-            alert('已將備份檔案寫入裝置（memoroa.dat）。請妥善保存密碼以便還原。');
-            return;
-          } catch (e) {
-            // 若使用者在檔案對話框取消或其他錯誤，回退到下載流程或顯示錯誤
-            if (e.name === 'AbortError' || e.message === 'The user aborted a request.') {
-              console.warn('使用者取消檔案選擇');
-              return;
+            // 重要：call showSaveFilePicker BEFORE heavy async work (keeps gesture)
+            try {
+                await saveWithPickerFlow(notes, password);
+                alert('已將備份檔案寫入裝置（memoroa.dat）。請妥善保存密碼以便還原。');
+                return;
+            } catch (e) {
+                // 若使用者在檔案對話框取消或其他錯誤，回退到下載流程或顯示錯誤
+                if (e.name === 'AbortError' || e.message === 'The user aborted a request.') {
+                    console.warn('使用者取消檔案選擇');
+                    return;
+                }
+                console.warn('saveWithPickerFlow 發生錯誤，嘗試 fallback：', e);
+                // 追續到 fallback 下載流程
             }
-            console.warn('saveWithPickerFlow 發生錯誤，嘗試 fallback：', e);
-            // 追續到 fallback 下載流程
-          }
         }
 
         // fallback (下載)
         await saveByDownloadFlow(notes, password, 'memoroa.dat');
         alert('已將備份檔案下載到裝置（memoroa.dat）。請妥善保存密碼以便還原。');
-      } catch (e) {
+    } catch (e) {
         if (e.message === '使用者取消') return;
         console.error(e);
         alert('備份失敗：' + (e.message || e));
-      }
-    });
+    }
+});
 
     /* ---------- 還原流程 ---------- */
-   restoreBtn.addEventListener('click', async () => {
+/* ---------- 修正後的還原流程 (加上 await) ---------- */
+restoreBtn.addEventListener('click', async () => {
     try {
         let arrayBuffer;
         let password;
@@ -596,8 +599,8 @@
             const file = await handle.getFile();
             arrayBuffer = await file.arrayBuffer();
 
-            // 步驟 2: 檔案選好後，立即詢問密碼
-            password = promptPassword('還原：請輸入備份檔案的密碼');
+            // 🌟 修正點 2：檔案選好後，使用 await 詢問密碼
+            password = await promptPassword('還原：請輸入備份檔案的密碼'); // 必須等待
 
         } 
         // --- 處理傳統 <input type="file"> 的瀏覽器 (舊版 Android 或其他) ---
@@ -613,9 +616,9 @@
                     const f = e.target.files[0];
                     if (!f) { reject(new Error('使用者取消')); return; }
                     
-                    // 2. 檔案選好 (onchange 觸發) 後，立即詢問密碼
+                    // 2. 檔案選好 (onchange 觸發) 後，使用 await 詢問密碼
                     try {
-                        const password = promptPassword('還原：請輸入備份檔案的密碼');
+                        const password = await promptPassword('還原：請輸入備份檔案的密碼'); // 必須等待
                         const arrayBuffer = await f.arrayBuffer();
                         resolve({ arrayBuffer, password });
                     } catch(err) {
@@ -631,6 +634,7 @@
         }
 
         // --- 共同的還原邏輯 ---
+        // 只有在正確取得密碼後，才會走到這裡並執行解密
         const notes = await decryptUint8ToNotes(arrayBuffer, password);
         localStorage.setItem('notes', JSON.stringify(notes));
         loadNotes();
@@ -666,5 +670,6 @@
 </div>
 </body>
 </html>
+
 
 
