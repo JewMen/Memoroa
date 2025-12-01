@@ -6,7 +6,7 @@
   <title>Memoroa</title>
   <link rel="manifest" href="./manifest.json">
   <style>
-    /* 你的原本 CSS 完整保留（不變） */
+    /* CSS 與你原本一致（保留） */
     :root {
       --bg-color: #f5f7fa;
       --sidebar-bg: #ffffff;
@@ -43,7 +43,6 @@
     }
 
     #new-note-btn {
-      type: button;
       background-color: var(--primary-color);
       color: var(--btn-text-color);
       border: none;
@@ -61,13 +60,7 @@
       transform: translateY(-1px);
     }
 
-    #note-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      flex-grow: 1;
-      overflow-y: auto;
-    }
+    #note-list { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
 
     .note-item {
       padding: 15px 20px;
@@ -78,90 +71,20 @@
       justify-content: space-between;
       align-items: center;
     }
+    .note-item:hover { background-color: var(--note-item-hover); }
+    .note-item.active { background-color: var(--note-item-active); border-left: 4px solid var(--primary-color); padding-left: 16px; }
 
-    .note-item:hover {
-      background-color: var(--note-item-hover);
-    }
+    .note-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; }
+    .note-preview { font-size: 14px; color: var(--placeholder-color); margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .note-item.active {
-      background-color: var(--note-item-active);
-      border-left: 4px solid var(--primary-color);
-      padding-left: 16px;
-    }
+    .delete-btn { background: none; border: none; color: var(--delete-btn-color); font-size: 18px; cursor: pointer; opacity: 0.5; transition: opacity 0.2s ease, color 0.2s ease; margin-left: 10px; }
+    .delete-btn:hover { color: red; opacity: 1; }
 
-    .note-title {
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex-grow: 1;
-    }
+    #main-content { flex-grow: 1; padding: 30px; display: flex; flex-direction: column; min-height: 0; }
+    #toolbar { display: flex; gap: 8px; margin-bottom: 10px; background-color: var(--sidebar-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); align-items: center; }
 
-    .note-preview {
-      font-size: 14px;
-      color: var(--placeholder-color);
-      margin-top: 5px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .delete-btn {
-      background: none;
-      border: none;
-      color: var(--delete-btn-color);
-      font-size: 18px;
-      cursor: pointer;
-      opacity: 0.5;
-      transition: opacity 0.2s ease, color 0.2s ease;
-      margin-left: 10px;
-    }
-
-    .delete-btn:hover {
-      color: red;
-      opacity: 1;
-    }
-
-    #main-content {
-      flex-grow: 1;
-      padding: 30px;
-      display: flex;
-      flex-direction: column;
-      min-height: 0; /* 允許內層滾動 */
-    }
-
-    #toolbar {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
-      background-color: var(--sidebar-bg);
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-      align-items: center;
-    }
-
-    .format-btn {
-      background-color: var(--note-item-hover);
-      border: 1px solid var(--border-color);
-      padding: 8px 12px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 16px;
-    }
-
-    .backup-btn {
-      margin-left: auto;
-      background-color: #2d9cdb;
-      color: #fff;
-      border: none;
-      padding: 8px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-    }
-
+    .format-btn { background-color: var(--note-item-hover); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; }
+    .backup-btn { margin-left: auto; background-color: #2d9cdb; color: #fff; border: none; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 14px; }
     .backup-btn:hover { filter: brightness(0.95); }
 
     #note-editor {
@@ -182,24 +105,17 @@
       min-height: 0;
     }
 
-    #note-editor:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-    }
-
-    #note-editor[contenteditable="true"]:empty::before {
-      content: attr(data-placeholder);
-      color: var(--placeholder-color);
-    }
-
+    #note-editor:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); }
+    #note-editor[contenteditable="true"]:empty::before { content: attr(data-placeholder); color: var(--placeholder-color); }
     #note-editor ul li { list-style-type: none; }
-    #note-editor ul li::before {
-      content: '➣';
-      color: var(--primary-color);
-      display: inline-block;
-      width: 1em;
-      margin-left: -1em;
-    }
+    #note-editor ul li::before { content: '➣'; color: var(--primary-color); display: inline-block; width: 1em; margin-left: -1em; }
+
+    /* password overlay default hidden but layout ready for flex */
+    #password-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+    #password-overlay .panel { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 320px; width: 90%; }
+    #password-overlay h3 { margin-top: 0; margin-bottom: 12px; font-size: 18px; }
+    #password-overlay input[type="password"] { width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:6px; font-size:16px; box-sizing: border-box; }
+    #password-overlay .actions { display:flex; justify-content:flex-end; gap:8px; }
 
     @media (max-width: 768px) {
       body { flex-direction: column; }
@@ -233,453 +149,371 @@
     <div id="note-editor" contenteditable="true" data-placeholder="在此開始寫筆記..."></div>
   </div>
 
+  <!-- password overlay -->
+  <div id="password-overlay" aria-hidden="true">
+    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="overlay-title">
+      <h3 id="overlay-title">請輸入密碼</h3>
+      <input type="password" id="overlay-password" placeholder="密碼" autocomplete="off" />
+      <div class="actions">
+        <button id="overlay-cancel" type="button" style="background:#ccc;border:none;padding:8px 12px;border-radius:6px;">取消</button>
+        <button id="overlay-confirm" type="button" style="background:#007bff;color:#fff;border:none;padding:8px 12px;border-radius:6px;">確認</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    /* 你的原本 JS - 除了備份/儲存那段有調整順序，其餘維持原樣 */
+  /* =====================
+     app.js inline (已修正/穩定版)
+     ===================== */
 
-    const noteList = document.getElementById('note-list');
-    const noteEditor = document.getElementById('note-editor');
-    const newNoteBtn = document.getElementById('new-note-btn');
-    const backupBtn = document.getElementById('backupBtn');
-    const restoreBtn = document.getElementById('restoreBtn');
+  // DOM
+  const noteList = document.getElementById('note-list');
+  const noteEditor = document.getElementById('note-editor');
+  const newNoteBtn = document.getElementById('new-note-btn');
+  const backupBtn = document.getElementById('backupBtn');
+  const restoreBtn = document.getElementById('restoreBtn');
 
-    let currentNoteId = null;
-    let saveTimer;
+  // password overlay elements
+  const pwdOverlay = document.getElementById('password-overlay');
+  const overlayTitle = document.getElementById('overlay-title');
+  const overlayInput = document.getElementById('overlay-password');
+  const overlayConfirm = document.getElementById('overlay-confirm');
+  const overlayCancel = document.getElementById('overlay-cancel');
 
-    window.onload = loadNotes;
-    newNoteBtn.onclick = newNote;
-    noteEditor.oninput = () => {
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(saveNote, 500);
-    };
+  // notes logic
+  let currentNoteId = null;
+  let saveTimer = null;
 
-    function formatDoc(command) {
-      document.execCommand(command, false, null);
+  function getNotesFromStorage() {
+    try {
+      const notesJSON = localStorage.getItem('notes');
+      return notesJSON ? JSON.parse(notesJSON) : [];
+    } catch (e) {
+      console.error('無法解析 localStorage 中的筆記', e);
+      return [];
+    }
+  }
+  function persistNotes(notes) { localStorage.setItem('notes', JSON.stringify(notes)); }
+
+  function addNoteToSidebar(note, isActive = false) {
+    const li = document.createElement('li');
+    li.className = 'note-item';
+    if (isActive) li.classList.add('active');
+    li.setAttribute('data-id', note.id);
+
+    const contentWrapper = document.createElement('div');
+    const title = document.createElement('div'); title.className = 'note-title';
+    const preview = document.createElement('div'); preview.className = 'note-preview';
+    contentWrapper.appendChild(title); contentWrapper.appendChild(preview);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.type = 'button';
+    deleteBtn.textContent = '×';
+    deleteBtn.onclick = (e) => { e.stopPropagation(); deleteNote(note.id); };
+
+    li.appendChild(contentWrapper);
+    li.appendChild(deleteBtn);
+    li.addEventListener('mousedown', (e) => { if (e.target.closest('.delete-btn')) return; selectNote(note.id); });
+
+    updateNoteItemContent(li, note.content);
+    noteList.prepend(li);
+    return li;
+  }
+
+  function updateNoteItemContent(item, content) {
+    const titleElement = item.querySelector('.note-title');
+    const previewElement = item.querySelector('.note-preview');
+    if (!titleElement || !previewElement) return;
+    const plainTextWithNewlines = content
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/div>|<\/p>/gi, "\n");
+    const plainText = plainTextWithNewlines.replace(/<[^>]*>?/gm, '').trim();
+    const lines = plainText.split('\n').filter(line => line.trim() !== '');
+    titleElement.textContent = lines[0] ? lines[0].substring(0, 30) : "新筆記";
+    previewElement.textContent = lines[1] ? lines[1] : "無預覽";
+  }
+
+  function loadNotes() {
+    noteList.innerHTML = '';
+    const notes = getNotesFromStorage();
+    notes.forEach(note => addNoteToSidebar(note));
+    if (notes.length > 0) selectNote(notes[0].id);
+    else newNote();
+  }
+
+  function saveNote() {
+    const content = noteEditor.innerHTML;
+    let notes = getNotesFromStorage();
+    if (!content.trim() && currentNoteId) {
+      deleteNote(currentNoteId);
+      return;
+    }
+    if (currentNoteId) {
+      const noteToUpdate = notes.find(n => n.id === currentNoteId);
+      if (noteToUpdate && noteToUpdate.content !== content) {
+        noteToUpdate.content = content;
+        const item = document.querySelector(`.note-item[data-id="${currentNoteId}"]`);
+        if (item) updateNoteItemContent(item, content);
+      }
+    } else if (content.trim()) {
+      const newNote = { id: Date.now().toString(), content };
+      notes.unshift(newNote);
+      currentNoteId = newNote.id;
+      document.querySelectorAll('.note-item.active').forEach(i => i.classList.remove('active'));
+      addNoteToSidebar(newNote, true);
+    }
+    persistNotes(notes);
+  }
+
+  function selectNote(id) {
+    const notes = getNotesFromStorage();
+    const sel = notes.find(n => n.id === id);
+    if (sel) {
+      noteEditor.innerHTML = sel.content;
+      currentNoteId = id;
+      document.querySelectorAll('.note-item').forEach(item => item.classList.toggle('active', item.getAttribute('data-id') === id));
       noteEditor.focus();
     }
+  }
 
-    function addNoteToSidebar(note, isActive = false) {
-      const li = document.createElement('li');
-      li.className = 'note-item';
-      if (isActive) li.classList.add('active');
-      li.setAttribute('data-id', note.id);
+  function newNote() {
+    noteEditor.innerHTML = '';
+    currentNoteId = null;
+    document.querySelectorAll('.note-item.active').forEach(i => i.classList.remove('active'));
+    noteEditor.focus();
+  }
 
-      const contentWrapper = document.createElement('div');
-      const title = document.createElement('div');
-      title.className = 'note-title';
-      const preview = document.createElement('div');
-      preview.className = 'note-preview';
-      contentWrapper.appendChild(title);
-      contentWrapper.appendChild(preview);
+  function deleteNote(id) {
+    let notes = getNotesFromStorage();
+    notes = notes.filter(n => n.id !== id);
+    persistNotes(notes);
+    const item = document.querySelector(`.note-item[data-id="${id}"]`);
+    if (item) item.remove();
+    if (currentNoteId === id) {
+      if (notes.length > 0) selectNote(notes[0].id); else newNote();
+    }
+  }
 
-      const deleteBtn = document.createElement('button');
-      deleteBtn.className = 'delete-btn';
-      deleteBtn.type = 'button';
-      deleteBtn.textContent = '×';
-      deleteBtn.onclick = (e) => {
-        e.stopPropagation();
-        deleteNote(note.id);
+  window.onload = loadNotes;
+  newNoteBtn.onclick = newNote;
+  noteEditor.oninput = () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveNote, 500); };
+  function formatDoc(cmd) { document.execCommand(cmd, false, null); noteEditor.focus(); }
+  window.formatDoc = formatDoc;
+
+  /* ========== encryption / file helpers ========== */
+  const FILE_MAGIC = 'MEMO';
+  const SALT_LEN = 16;
+  const IV_LEN = 12;
+  const PBKDF2_ITER = 150000;
+
+  function getRandomBytes(len) { const b = new Uint8Array(len); crypto.getRandomValues(b); return b; }
+
+  async function deriveKeyFromPassword(password, saltBuffer) {
+    const enc = new TextEncoder();
+    const passKey = await crypto.subtle.importKey('raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey']);
+    return await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: saltBuffer, iterations: PBKDF2_ITER, hash: 'SHA-256' }, passKey, { name: 'AES-GCM', length: 256 }, true, ['encrypt','decrypt']);
+  }
+
+  async function encryptNotesToUint8(notesArray, password) {
+    const salt = getRandomBytes(SALT_LEN);
+    const iv = getRandomBytes(IV_LEN);
+    const key = await deriveKeyFromPassword(password, salt.buffer);
+    const encoder = new TextEncoder();
+    const plaintext = encoder.encode(JSON.stringify(notesArray));
+    const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext);
+    const magicBuf = new TextEncoder().encode(FILE_MAGIC);
+    const cipherBuf = new Uint8Array(cipher);
+    const out = new Uint8Array(magicBuf.length + salt.length + iv.length + cipherBuf.length);
+    let off = 0; out.set(magicBuf, off); off += magicBuf.length; out.set(salt, off); off += salt.length; out.set(iv, off); off += iv.length; out.set(cipherBuf, off);
+    return out.buffer;
+  }
+
+  async function decryptUint8ToNotes(arrayBuffer, password) {
+    const data = new Uint8Array(arrayBuffer);
+    const magicLen = FILE_MAGIC.length;
+    const magic = new TextDecoder().decode(data.slice(0, magicLen));
+    if (magic !== FILE_MAGIC) throw new Error('檔案格式不正確');
+    const salt = data.slice(magicLen, magicLen + SALT_LEN).buffer;
+    const iv = data.slice(magicLen + SALT_LEN, magicLen + SALT_LEN + IV_LEN);
+    const cipher = data.slice(magicLen + SALT_LEN + IV_LEN).buffer;
+    const key = await deriveKeyFromPassword(password, salt);
+    const plainBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher);
+    return JSON.parse(new TextDecoder().decode(plainBuf));
+  }
+
+  // save via showSaveFilePicker or fallback download
+  async function saveWithPickerFlow(notesArray, password) {
+    const opts = { types: [{ description:'Memoroa backup', accept: { 'application/octet-stream': ['.dat'] } }], suggestedName: 'memoroa.dat' };
+    const handle = await window.showSaveFilePicker(opts);
+    const arrayBuf = await encryptNotesToUint8(notesArray, password);
+    const writable = await handle.createWritable();
+    await writable.write(arrayBuf);
+    await writable.close();
+    return true;
+  }
+
+  async function saveByDownloadFlow(notesArray, password, suggestedName='memoroa.dat') {
+    const arrayBuf = await encryptNotesToUint8(notesArray, password);
+    const blob = new Blob([arrayBuf], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = suggestedName; document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    return true;
+  }
+
+  async function openFileFromDevicePicker() {
+    const [handle] = await window.showOpenFilePicker({ types: [{ description: 'Memoroa backup', accept: { 'application/octet-stream': ['.dat'] } }], multiple: false });
+    const file = await handle.getFile();
+    const arrayBuffer = await file.arrayBuffer();
+    return { arrayBuffer, handle, name: file.name };
+  }
+
+  async function openFileFromInput() {
+    return await new Promise((resolve, reject) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.dat,application/octet-stream';
+      input.onchange = async (e) => {
+        const f = e.target.files[0];
+        if (!f) { reject(new Error('使用者取消')); return; }
+        const arrayBuffer = await f.arrayBuffer();
+        resolve({ arrayBuffer, handle: null, name: f.name });
       };
+      input.click();
+    });
+  }
 
-      li.appendChild(contentWrapper);
-      li.appendChild(deleteBtn);
+  /* ========= password modal helper (robust) =========
+     returns Promise that resolves to password string, or rejects with Error('使用者取消')
+  */
+  function askPasswordModal(promptText = '請輸入密碼') {
+    return new Promise((resolve, reject) => {
+      overlayTitle.textContent = promptText;
+      overlayInput.value = '';
+      pwdOverlay.style.display = 'flex';
+      pwdOverlay.setAttribute('aria-hidden', 'false');
 
-      li.addEventListener('mousedown', (e) => {
-        if (e.target.closest('.delete-btn')) return;
-        selectNote(note.id);
-      });
+      // cleanup function to remove listeners and hide
+      function cleanup() {
+        pwdOverlay.style.display = 'none';
+        pwdOverlay.setAttribute('aria-hidden', 'true');
+        overlayConfirm.removeEventListener('click', onConfirm);
+        overlayCancel.removeEventListener('click', onCancel);
+        overlayInput.removeEventListener('keydown', onKey);
+      }
 
-      updateNoteItemContent(li, note.content);
-      noteList.prepend(li);
-      return li;
-    }
+      function onConfirm(e) {
+        const v = overlayInput.value || '';
+        if (v.length < 1) {
+          // show inline error briefly (we use alert for simplicity)
+          alert('密碼不可為空。');
+          overlayInput.focus();
+          return;
+        }
+        cleanup();
+        // small delay to ensure focus/keyboard collapse on mobile
+        setTimeout(() => resolve(v), 50);
+      }
 
-    function updateNoteItemContent(item, content) {
-      const titleElement = item.querySelector('.note-title');
-      const previewElement = item.querySelector('.note-preview');
-      if (!titleElement || !previewElement) return;
-      const plainTextWithNewlines = content
-        .replace(/<br\s*\/?>/gi, "\n")
-        .replace(/<\/div>|<\/p>/gi, "\n");
-      const plainText = plainTextWithNewlines.replace(/<[^>]*>?/gm, '').trim();
-      const lines = plainText.split('\n').filter(line => line.trim() !== '');
-      titleElement.textContent = lines[0] ? lines[0].substring(0, 30) : "新筆記";
-      previewElement.textContent = lines[1] ? lines[1] : "無預覽";
-    }
+      function onCancel(e) {
+        cleanup();
+        reject(new Error('使用者取消'));
+      }
 
-    function loadNotes() {
-      noteList.innerHTML = '';
+      function onKey(e) {
+        if (e.key === 'Enter') { onConfirm(); }
+        else if (e.key === 'Escape') { onCancel(); }
+      }
+
+      overlayConfirm.addEventListener('click', onConfirm);
+      overlayCancel.addEventListener('click', onCancel);
+      overlayInput.addEventListener('keydown', onKey);
+
+      // ensure keyboard opens on mobile (give slight delay)
+      setTimeout(() => { try { overlayInput.focus(); } catch (_) {} }, 50);
+    });
+  }
+
+  /* ========== Backup flow ========== */
+  backupBtn.addEventListener('click', async () => {
+    try {
       const notes = getNotesFromStorage();
-      notes.forEach(note => addNoteToSidebar(note));
-      if (notes.length > 0) selectNote(notes[0].id);
-      else newNote();
-    }
+      if (!notes || notes.length === 0) { alert('目前沒有任何筆記可備份。'); return; }
 
-    function saveNote() {
-      const content = noteEditor.innerHTML;
-      let notes = getNotesFromStorage();
-      if (!content.trim() && currentNoteId) {
-        deleteNote(currentNoteId);
+      // Ask password first - modal is reliable cross-platform
+      const password = await askPasswordModal('備份：請輸入備份密碼（將用來加密）');
+
+      if (window.showSaveFilePicker) {
+        try {
+          // open picker within user gesture
+          await saveWithPickerFlow(notes, password);
+          alert('已將備份檔案寫入裝置（memoroa.dat）。請妥善保存密碼以便還原。');
+          return;
+        } catch (err) {
+          if (err && (err.name === 'AbortError' || err.message === 'The user aborted a request.')) {
+            console.warn('使用者取消 file picker');
+            return;
+          }
+          console.warn('saveWithPickerFlow 錯誤，fallback 至下載：', err);
+        }
+      }
+
+      // fallback download
+      await saveByDownloadFlow(notes, password, 'memoroa.dat');
+      alert('已將備份檔案下載到裝置（memoroa.dat）。請妥善保存密碼以便還原。');
+    } catch (e) {
+      if (e.message === '使用者取消') return;
+      console.error('備份失敗：', e);
+      alert('備份失敗：' + (e.message || e));
+    }
+  });
+
+  /* ========== Restore flow ========== */
+  restoreBtn.addEventListener('click', async () => {
+    try {
+      let arrayBuffer;
+      // If browser supports showOpenFilePicker (modern), use it
+      if (window.showOpenFilePicker) {
+        const { arrayBuffer: ab } = await openFileFromDevicePicker();
+        arrayBuffer = ab;
+        // Ask password after file picked (modal)
+        const password = await askPasswordModal('還原：請輸入備份檔案的密碼');
+        // attempt decrypt
+        const notes = await decryptUint8ToNotes(arrayBuffer, password);
+        persistNotes(notes); loadNotes();
+        alert('還原成功（已覆蓋目前筆記資料）。');
+        return;
+      } else {
+        // fallback to input
+        const { arrayBuffer: ab } = await openFileFromInput();
+        arrayBuffer = ab;
+        const password = await askPasswordModal('還原：請輸入備份檔案的密碼');
+        const notes = await decryptUint8ToNotes(arrayBuffer, password);
+        persistNotes(notes); loadNotes();
+        alert('還原成功（已覆蓋目前筆記資料）。');
         return;
       }
-      if (currentNoteId) {
-        const noteToUpdate = notes.find(note => note.id === currentNoteId);
-        if (noteToUpdate && noteToUpdate.content !== content) {
-          noteToUpdate.content = content;
-          const item = document.querySelector(`.note-item[data-id="${currentNoteId}"]`);
-          if (item) updateNoteItemContent(item, content);
-        }
-      } else if (content.trim()) {
-        const newNote = { id: Date.now().toString(), content: content };
-        notes.unshift(newNote);
-        currentNoteId = newNote.id;
-        document.querySelectorAll('.note-item.active').forEach(item => item.classList.remove('active'));
-        addNoteToSidebar(newNote, true);
-      }
-      localStorage.setItem('notes', JSON.stringify(notes));
+    } catch (e) {
+      if (e && (e.message === '使用者取消' || e.name === 'AbortError')) return;
+      console.error('還原失敗：', e);
+      // detect common decryption/auth errors
+      const msg = (e && (e.message || e.toString())) || '發生未知錯誤';
+      if (msg.includes('檔案格式不正確')) alert('還原失敗：檔案不是 Memoroa 的備份檔，請確認檔案來源。');
+      else if (msg.includes('authentication tag') || msg.toLowerCase().includes('decryption')) alert('還原失敗：密碼錯誤或檔案已損壞。');
+      else alert('還原失敗：' + msg);
     }
+  });
 
-    function selectNote(id) {
-      const notes = getNotesFromStorage();
-      const selectedNote = notes.find(note => note.id === id);
-      if (selectedNote) {
-        noteEditor.innerHTML = selectedNote.content;
-        currentNoteId = id;
-        document.querySelectorAll('.note-item').forEach(item => {
-          item.classList.toggle('active', item.getAttribute('data-id') === id);
-        });
-        noteEditor.focus();
-      }
-    }
-
-    function newNote() {
-      noteEditor.innerHTML = '';
-      currentNoteId = null;
-      document.querySelectorAll('.note-item.active').forEach(item => item.classList.remove('active'));
-      noteEditor.focus();
-    }
-
-    function deleteNote(id) {
-      let notes = getNotesFromStorage();
-      notes = notes.filter(note => note.id !== id);
-      localStorage.setItem('notes', JSON.stringify(notes));
-      const itemToRemove = document.querySelector(`.note-item[data-id="${id}"]`);
-      if (itemToRemove) itemToRemove.remove();
-      if (currentNoteId === id) {
-        if (notes.length > 0) selectNote(notes[0].id);
-        else newNote();
-      }
-    }
-
-    function getNotesFromStorage() {
-      try {
-        const notesJSON = localStorage.getItem('notes');
-        return notesJSON ? JSON.parse(notesJSON) : [];
-      } catch (e) {
-        console.error("無法解析 localStorage 中的筆記", e);
-        return [];
-      }
-    }
-
-    /* ========== 加密 / 檔案處理 ========== */
-    const FILE_MAGIC = 'MEMO';
-    const SALT_LEN = 16;
-    const IV_LEN = 12;
-    const PBKDF2_ITER = 150_000;
-
-    function getRandomBytes(len) {
-      const b = new Uint8Array(len);
-      crypto.getRandomValues(b);
-      return b;
-    }
-
-    async function deriveKeyFromPassword(password, salt) {
-      const enc = new TextEncoder();
-      const passKey = await crypto.subtle.importKey(
-        "raw", enc.encode(password), { name: "PBKDF2" }, false, ["deriveKey"]
-      );
-      const key = await crypto.subtle.deriveKey(
-        { name: "PBKDF2", salt: salt, iterations: PBKDF2_ITER, hash: "SHA-256" },
-        passKey,
-        { name: "AES-GCM", length: 256 },
-        true,
-        ["encrypt", "decrypt"]
-      );
-      return key;
-    }
-
-    async function encryptNotesToUint8(notesArray, password) {
-      const salt = getRandomBytes(SALT_LEN);
-      const iv = getRandomBytes(IV_LEN);
-      const key = await deriveKeyFromPassword(password, salt.buffer);
-      const encoder = new TextEncoder();
-      const plaintext = encoder.encode(JSON.stringify(notesArray));
-      const cipher = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, plaintext);
-      const magicBuf = new TextEncoder().encode(FILE_MAGIC);
-      const saltBuf = salt;
-      const ivBuf = iv;
-      const cipherBuf = new Uint8Array(cipher);
-      const out = new Uint8Array(magicBuf.length + saltBuf.length + ivBuf.length + cipherBuf.length);
-      let offset = 0;
-      out.set(magicBuf, offset); offset += magicBuf.length;
-      out.set(saltBuf, offset); offset += saltBuf.length;
-      out.set(ivBuf, offset); offset += ivBuf.length;
-      out.set(cipherBuf, offset);
-      return out.buffer;
-    }
-
-    async function decryptUint8ToNotes(arrayBuffer, password) {
-      const data = new Uint8Array(arrayBuffer);
-      const magicLen = FILE_MAGIC.length;
-      const magic = new TextDecoder().decode(data.slice(0, magicLen));
-      if (magic !== FILE_MAGIC) throw new Error('檔案格式不正確');
-      const salt = data.slice(magicLen, magicLen + SALT_LEN).buffer;
-      const iv = data.slice(magicLen + SALT_LEN, magicLen + SALT_LEN + IV_LEN);
-      const cipher = data.slice(magicLen + SALT_LEN + IV_LEN).buffer;
-      const key = await deriveKeyFromPassword(password, salt);
-      const plainBuf = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, cipher);
-      const decoded = new TextDecoder().decode(plainBuf);
-      return JSON.parse(decoded);
-    }
-
-    /* ---------- 新：在 user gesture 期間先 open save handle（若可用），再做加密 ---------- */
-    async function saveWithPickerFlow(notesArray, password) {
-      // 先取得 handle（必須在 user gesture 期間呼叫）
-      const opts = {
-        types: [{
-          description: 'Memoroa backup',
-          accept: { 'application/octet-stream': ['.dat'] }
-        }],
-        suggestedName: 'memoroa.dat'
-      };
-      const handle = await window.showSaveFilePicker(opts);
-      // 接著做加密（async heavy），並寫入 handle
-      const arrayBuf = await encryptNotesToUint8(notesArray, password);
-      const writable = await handle.createWritable();
-      await writable.write(arrayBuf);
-      await writable.close();
-      return true;
-    }
-
-    // fallback: 做完加密再觸發下載（在某些瀏覽器會允許）
-    async function saveByDownloadFlow(notesArray, password, suggestedName='memoroa.dat') {
-      const arrayBuf = await encryptNotesToUint8(notesArray, password);
-      const blob = new Blob([arrayBuf], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = suggestedName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      return true;
-    }
-
-    // open file helper (keeps direct call in user gesture)
-    async function openFileFromDevice() {
-      if (window.showOpenFilePicker) {
-        const [handle] = await window.showOpenFilePicker({
-          types: [{
-            description: 'Memoroa backup',
-            accept: { 'application/octet-stream': ['.dat'] }
-          }],
-          multiple: false
-        });
-        const file = await handle.getFile();
-        const arrayBuffer = await file.arrayBuffer();
-        return { arrayBuffer, handle, name: file.name };
-      } else {
-        return await new Promise((resolve, reject) => {
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.accept = '.dat,application/octet-stream';
-          input.onchange = async (e) => {
-            const f = e.target.files[0];
-            if (!f) { reject(new Error('使用者取消')); return; }
-            const arrayBuffer = await f.arrayBuffer();
-            resolve({ arrayBuffer, handle: null, name: f.name });
-          };
-          input.click();
-        });
-      }
-    }
-
-    // prompt 密碼（同步 prompt 保留）
-    function promptPassword(promptText = '請輸入備份密碼') {
-    return new Promise((resolve, reject) => {
-        const overlay = document.getElementById('password-overlay');
-        const title = document.getElementById('overlay-title');
-        const passwordInput = document.getElementById('overlay-password');
-        const confirmBtn = document.getElementById('overlay-confirm');
-        const cancelBtn = document.getElementById('overlay-cancel');
-
-        title.textContent = promptText;
-        passwordInput.value = ''; // 清空欄位
-        overlay.style.display = 'flex'; // 顯示視窗
-
-        // 綁定確認事件
-        confirmBtn.onclick = () => {
-            const p = passwordInput.value;
-            if (p.length < 4) {
-                // 這裡可以換成更友善的錯誤提示，例如在視窗內顯示警告
-                alert('建議使用較長密碼 (至少 4 個字)，請重新輸入或確認'); 
-                return;
-            }
-            overlay.style.display = 'none'; // 隱藏視窗
-            resolve(p); // 傳回密碼
-        };
-
-        // 綁定取消事件
-        cancelBtn.onclick = () => {
-            overlay.style.display = 'none'; // 隱藏視窗
-            reject(new Error('使用者取消'));
-        };
-        
-        passwordInput.focus();
+  // register service worker (keep existing behavior)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(registration => { console.log('Service Worker registered: ', registration); })
+        .catch(err => { console.log('Service Worker registration failed: ', err); });
     });
-}
-
-    /* ---------- 備份按鈕：先在 gesture 內嘗試 open handle（若支援），再做加密與寫入 ---------- */
-    /* ---------- 修正後的備份按鈕：先問密碼，再備份 (並加上 await) ---------- */
-/* ---------- 修正後的備份按鈕：先問密碼，再備份 (並加上 await) ---------- */
-backupBtn.addEventListener('click', async () => {
-    try {
-        const notes = getNotesFromStorage();
-        if (!notes || notes.length === 0) {
-            alert('目前沒有任何筆記可備份。');
-            return;
-        }
-
-        // 🌟 修正點 A: 備份前詢問密碼，並使用 await 等待輸入完成
-        const password = await promptPassword('備份：請輸入備份密碼（將用來加密）');
-
-        if (window.showSaveFilePicker) {
-            // 重要：call showSaveFilePicker BEFORE heavy async work (keeps gesture)
-            try {
-                await saveWithPickerFlow(notes, password);
-                alert('已將備份檔案寫入裝置（memoroa.dat）。請妥善保存密碼以便還原。');
-                return;
-            } catch (e) {
-                // 若使用者在檔案對話框取消或其他錯誤，回退到下載流程或顯示錯誤
-                if (e.name === 'AbortError' || e.message === 'The user aborted a request.') {
-                    console.warn('使用者取消檔案選擇');
-                    return;
-                }
-                console.warn('saveWithPickerFlow 發生錯誤，嘗試 fallback：', e);
-                // 追續到 fallback 下載流程
-            }
-        }
-
-        // fallback (下載)
-        await saveByDownloadFlow(notes, password, 'memoroa.dat');
-        alert('已將備份檔案下載到裝置（memoroa.dat）。請妥善保存密碼以便還原。');
-    } catch (e) {
-        if (e.message === '使用者取消') return;
-        console.error(e);
-        alert('備份失敗：' + (e.message || e));
-    }
-});
-
-    /* ---------- 還原流程 ---------- */
-/* ---------- 修正後的還原流程 (加上 await) ---------- */
-/* ---------- 修正後的還原流程 (所有 promptPassword 都加上 await) ---------- */
-restoreBtn.addEventListener('click', async () => {
-    try {
-        let arrayBuffer;
-        let password;
-        
-        // --- 處理 showOpenFilePicker 支援的瀏覽器 (Chromium/新版) ---
-        if (window.showOpenFilePicker) {
-            // 步驟 1: 在 User Gesture 內開啟檔案選擇器
-            const [handle] = await window.showOpenFilePicker({
-                types: [{
-                    description: 'Memoroa backup',
-                    accept: { 'application/octet-stream': ['.dat'] }
-                }],
-                multiple: false
-            });
-            const file = await handle.getFile();
-            arrayBuffer = await file.arrayBuffer();
-
-            // 🌟 修正點 B: 檔案選好後，使用 await 詢問密碼
-            password = await promptPassword('還原：請輸入備份檔案的密碼'); 
-
-        } 
-        // --- 處理傳統 <input type="file"> 的瀏覽器 (舊版 Android 或其他) ---
-        else {
-            // 必須使用 Promise 來包裝，讓流程停等
-            const { arrayBuffer: buf, password: pw } = await new Promise((resolve, reject) => {
-                // 1. 動態建立 input 元素
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.dat,application/octet-stream';
-
-                input.onchange = async (e) => {
-                    const f = e.target.files[0];
-                    if (!f) { reject(new Error('使用者取消')); return; }
-                    
-                    // 2. 檔案選好 (onchange 觸發) 後，使用 await 詢問密碼
-                    try {
-                        // 🌟 修正點 C: 必須在 promptPassword 前加上 await
-                        const password = await promptPassword('還原：請輸入備份檔案的密碼'); 
-                        const arrayBuffer = await f.arrayBuffer();
-                        resolve({ arrayBuffer, password });
-                    } catch(err) {
-                        reject(err);
-                    }
-                };
-
-                input.click();
-            });
-            
-            arrayBuffer = buf;
-            password = pw;
-        }
-
-        // --- 共同的還原邏輯 ---
-        // 只有在正確取得密碼後，才會走到這裡並執行解密
-        const notes = await decryptUint8ToNotes(arrayBuffer, password);
-        localStorage.setItem('notes', JSON.stringify(notes));
-        loadNotes();
-        alert('還原成功（已覆蓋目前筆記資料）。');
-    } catch (e) {
-        if (e.message === '使用者取消' || e.name === 'AbortError') return;
-        
-        // 檢查是否為密碼錯誤
-        if (e.name === 'OperationError' && (e.message.includes('The operation failed for an operation-specific reason') || e.message.includes('Decryption failed'))) {
-            alert('還原失敗：密碼錯誤，請重新輸入。');
-        } else {
-            alert('還原失敗：' + (e.message || e));
-        }
-        console.error(e);
-    }
-});
-
-    // PWA - 註冊 Service Worker（保留你原本的）
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-          .then(registration => {
-            console.log('Service Worker registered: ', registration);
-          })
-          .catch(registrationError => {
-            console.log('Service Worker registration failed: ', registrationError);
-          });
-      });
-    }
-
+  }
   </script>
-  <div id="password-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; justify-content:center; align-items:center;">
-    <div style="background:white; padding:30px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.3); max-width: 300px; width: 90%;">
-        <h3 id="overlay-title" style="margin-top:0;">請輸入密碼</h3>
-        <input type="password" id="overlay-password" placeholder="密碼" style="width:100%; padding:10px; margin-bottom:15px; border:1px solid #ccc; border-radius:5px;">
-        <button id="overlay-confirm" style="background-color:#007bff; color:white; border:none; padding:10px 15px; border-radius:5px; cursor:pointer; margin-right: 10px;">確認</button>
-        <button id="overlay-cancel" style="background-color:#ccc; color:#333; border:none; padding:10px 15px; border-radius:5px; cursor:pointer;">取消</button>
-    </div>
-</div>
 </body>
 </html>
-
-
-
-
